@@ -1,0 +1,135 @@
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+
+#arena {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    overflow: hidden;
+}
+
+#game-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 800px;
+    height: 600px;
+}
+
+#leaderboard {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    min-width: 170px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+#leaderboard.hidden,
+#podium.hidden,
+#winner-banner.hidden {
+    display: none;
+}
+
+#leaderboard strong,
+#podium strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #5ee7ff;
+    font-size: 14px;
+}
+
+.row,
+.podium-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    margin: 5px 0;
+    color: #ffffff;
+}
+
+.row span:first-child,
+.podium-row span:nth-child(2) {
+    max-width: 140px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.row span:last-child,
+.podium-row span:last-child {
+    color: #ffe66d;
+    font-weight: bold;
+}
+
+#podium {
+    position: fixed;
+    bottom: 15px;
+    left: 15px;
+    z-index: 10;
+    min-width: 230px;
+    max-width: 280px;
+    padding: 12px;
+    border: 1px solid rgba(255, 230, 109, 0.35);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.podium-empty {
+    color: #9ca3af;
+}
+
+#winner-banner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 30;
+    min-width: 320px;
+    padding: 30px 42px;
+    border: 2px solid #ffe66d;
+    border-radius: 20px;
+    background: linear-gradient(
+        135deg,
+        rgba(31, 41, 55, 0.97),
+        rgba(17, 24, 39, 0.97)
+    );
+    box-shadow:
+        0 0 25px rgba(255, 230, 109, 0.7),
+        0 20px 70px rgba(0, 0, 0, 0.7);
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+.winner-title {
+    color: #ffe66d;
+    font-size: 34px;
+    font-weight: 900;
+}
+
+.winner-name {
+    margin-top: 12px;
+    color: #ffffff;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.winner-wins {
+    margin-top: 8px;
+    color: #cbd5e1;
+    font-size: 15px;
+}

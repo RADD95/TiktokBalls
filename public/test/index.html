@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TikTok Balls - Test</title>
+
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #111827;
+            color: #ffffff;
+            font: 16px Arial, sans-serif;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 70px;
+            padding: 15px 18px;
+            background: #1f2937;
+            border-bottom: 1px solid #374151;
+        }
+
+        header strong {
+            margin-right: auto;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: 0;
+            border-radius: 7px;
+            background: #5ee7ff;
+            color: #071018;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            filter: brightness(1.12);
+        }
+
+        button:disabled {
+            cursor: wait;
+            opacity: 0.6;
+        }
+
+        button.secondary {
+            background: #374151;
+            color: #ffffff;
+        }
+
+        button.danger {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        iframe {
+            display: block;
+            width: 100vw;
+            height: calc(100vh - 70px);
+            border: 0;
+            background: transparent;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-backdrop.visible {
+            display: flex;
+        }
+
+        .settings-modal {
+            position: relative;
+            width: min(620px, 100%);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            padding: 25px;
+            border: 1px solid #374151;
+            border-radius: 15px;
+            background: #1b2030;
+            box-shadow: 0 20px 70px rgba(0, 0, 0, 0.5);
+        }
+
+        .settings-modal h2 {
+            margin: 0 0 6px;
+        }
+
+        .settings-modal > p {
+            margin-top: 0;
+            color: #9ca3af;
+        }
+
+        .settings-modal h3 {
+            margin: 24px 0 10px;
+            padding-bottom: 7px;
+            border-bottom: 1px solid #374151;
+            color: #5ee7ff;
+            font-size: 16px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: 50%;
+            background: #374151;
+            color: #ffffff;
+            font-size: 22px;
+            line-height: 36px;
+        }
+
+        .settings-form label {
+            display: block;
+            margin: 14px 0;
+            color: #e5e7eb;
+        }
+
+        .settings-form input:not([type="checkbox"]) {
+            display: block;
+            width: 100%;
+            margin-top: 6px;
+            padding: 10px;
+            border: 1px solid #4b5563;
+            border-radius: 7px;
+            outline: none;
+            background: #10131d;
+            color: #ffffff;
+            font-size: 15px;
+        }
+
+        .settings-form input:not([type="checkbox"]):focus {
+            border-color: #5ee7ff;
+        }
+
+        .checkbox-row {
+            display: flex !important;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-row input {
+            width: 17px;
+            height: 17px;
+        }
+
+        .settings-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 22px;
+            padding-top: 16px;
+            border-top: 1px solid #374151;
+        }
+
+        .overlay-url {
+            display: block;
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #4b5563;
+            border-radius: 7px;
+            background: #10131d;
+            color: #d1d5db;
+        }
+
+        #settings-message {
+            min-height: 20px;
+            margin: 15px 0 0;
+            color: #8cff98;
+        }
+
+        #settings-message.error {
+            color: #ff8c8c;
+        }
+
+        @media (max-width: 700px) {
+            header {
+                flex-wrap: wrap;
+            }
+
+            header strong {
+                width: 100%;
+                margin-right: 0;
+            }
+
+            iframe {
+                height: calc(100vh - 115px);
+            }
+
+            .settings-modal {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <strong>TikTok Balls · Test</strong>
+
+                            <button
+                        id="connect-tiktok"
+                        type="button">
+                        Conectar TikTok
+                    </button>
+
+
+        <button id="simulate-comment">
+            Comentario
+        </button>
+
+        <button id="simulate-gift">
+            Gift
+        </button>
+
+        <button id="open-settings" class="secondary">
+            ⚙ Settings
+        </button>
+    </header>
+
+    <iframe
+        id="overlay-frame"
+        title="TikTok Balls Overlay">
+    </iframe>
+
+    <div
+        id="settings-backdrop"
+        class="modal-backdrop">
+
+        <section
+            class="settings-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-title">
+
+            <button
+                id="close-settings"
+                class="close-modal"
+                type="button"
+                title="Cerrar settings">
+                ×
+            </button>
+
+            <h2 id="settings-title">
+                Settings
+            </h2>
+
+            <p>
+                Configura los puntos y multiplicadores del juego.
+            </p>
+
+            <form
+                id="settings-form"
+                class="settings-form">
+
+                <h3>Conexión</h3>
+
+                <label>
+                    Usuario TikTok
+                    <input
+                        name="tiktokUsername"
+                        type="text"
+                        placeholder="usuario_sin_@"
+                        autocomplete="off">
+                </label>
+
+                <h3>Comentarios</h3>
+
+                <label>
+                    Puntos base por comentario
+                    <input
+                        name="commentPoints"
+                        type="number"
+                        min="0"
+                        step="1">
+                </label>
+
+                <label>
+                    Multiplicador de comentarios
+                    <input
+                        name="commentMultiplier"
+                        type="number"
+                        min="0"
+                        step="0.1">
+                </label>
+
+                <h3>Likes</h3>
+
+                <label>
+                    Puntos base por like
+                    <input
+                        name="likePoints"
+                        type="number"
+                        min="0"
+                        step="1">
+                </label>
+
+                <label>
+                    Multiplicador de likes
+                    <input
+                        name="likeMultiplier"
+                        type="number"
+                        min="0"
+                        step="0.1">
+                </label>
+
+                <h3>Follows</h3>
+
+                <label>
+                    Puntos base por follow
+                    <input
+                        name="followPoints"
+                        type="number"
+                        min="0"
+                        step="1">
+                </label>
+
+                <label>
+                    Multiplicador de follows
+                    <input
+                        name="followMultiplier"
+                        type="number"
+                        min="0"
+                        step="0.1">
+                </label>
+
+                <h3>Shares</h3>
+
+                <label>
+                    Puntos base por share
+                    <input
+                        name="sharePoints"
+                        type="number"
+                        min="0"
+                        step="1">
+                </label>
+
+                <label>
+                    Multiplicador de shares
+                    <input
+                        name="shareMultiplier"
+                        type="number"
+                        min="0"
+                        step="0.1">
+                </label>
+
+                <h3>Gifts</h3>
+
+                <label>
+                    Puntos base por unidad de gift
+                    <input
+                        name="giftPoints"
+                        type="number"
+                        min="0"
+                        step="1">
+                </label>
+
+                <label>
+                    Multiplicador de gifts
+                    <input
+                        name="giftMultiplier"
+                        type="number"
+                        min="0"
+                        step="0.1">
+                </label>
+
+                <h3>Juego</h3>
+
+                <label>
+                    Límite de puntos por minuto
+                    <input
+                        name="maxPointsPerMinute"
+                        type="number"
+                        min="0"
+                        step="1">
+                </label>
+
+                <label>
+                    Tamaño base de las bolitas
+                    <input
+                        name="baseRadius"
+                        type="number"
+                        min="5"
+                        step="1">
+                </label>
+
+                <label>
+                    Puntos necesarios para crecer
+                    <input
+                        name="pointsPerRadius"
+                        type="number"
+                        min="0"
+                        step="0.1">
+                </label>
+
+                <label>
+                    Tamaño máximo
+                    <input
+                        name="maxRadius"
+                        type="number"
+                        min="10"
+                        step="1">
+                </label>
+
+                <label>
+                    Velocidad
+                    <input
+                        name="speed"
+                        type="number"
+                        min="0"
+                        step="0.1">
+                </label>
+
+                <label class="checkbox-row">
+                    <input
+                        name="showNames"
+                        type="checkbox">
+                    Mostrar nombres
+                </label>
+
+                <label class="checkbox-row">
+                    <input
+                        name="showLeaderboard"
+                        type="checkbox">
+                    Mostrar ranking
+                </label>
+
+                <label class="checkbox-row">
+    <input
+        name="showPodium"
+        type="checkbox">
+    Mostrar podio histórico
+</label>
+
+                <div class="settings-actions">
+                    <button type="submit">
+                        Guardar settings
+                    </button>
+
+                    <button
+                        id="copy-overlay-url"
+                        type="button">
+                        Copiar URL del overlay
+                    </button>
+
+
+                    <button
+                        id="reset-game"
+                        type="button"
+                        class="danger">
+                        Reiniciar partida
+                    </button>
+                </div>
+
+                <input
+                    id="overlay-url"
+                    class="overlay-url"
+                    type="text"
+                    readonly>
+
+                <p id="settings-message"></p>
+            </form>
+        </section>
+    </div>
+
+    <script>
+        const overlayFrame =
+            document.querySelector('#overlay-frame');
+
+        const openSettingsButton =
+            document.querySelector('#open-settings');
+
+        const closeSettingsButton =
+            document.querySelector('#close-settings');
+
+        const settingsBackdrop =
+            document.querySelector('#settings-backdrop');
+
+        const settingsForm =
+            document.querySelector('#settings-form');
+
+        const settingsMessage =
+            document.querySelector('#settings-message');
+
+        const overlayUrlInput =
+            document.querySelector('#overlay-url');
+
+        const simulateCommentButton =
+            document.querySelector('#simulate-comment');
+
+        const simulateGiftButton =
+            document.querySelector('#simulate-gift');
+
+        const copyOverlayButton =
+            document.querySelector('#copy-overlay-url');
+
+        const connectTikTokButton =
+            document.querySelector('#connect-tiktok');
+
+        const resetGameButton =
+            document.querySelector('#reset-game');
+
+        const settingsKeys = [
+            'tiktokUsername',
+
+            'commentPoints',
+            'commentMultiplier',
+
+            'likePoints',
+            'likeMultiplier',
+
+            'followPoints',
+            'followMultiplier',
+
+            'sharePoints',
+            'shareMultiplier',
+
+            'giftPoints',
+            'giftMultiplier',
+
+            'maxPointsPerMinute',
+
+            'baseRadius',
+            'pointsPerRadius',
+            'maxRadius',
+            'speed',
+
+            'showNames',
+            'showLeaderboard',
+            'showPodium'
+        ];
+
+        let viewerNumber = 1;
+
+        function showMessage(message, isError = false) {
+            settingsMessage.textContent = message;
+            settingsMessage.classList.toggle(
+                'error',
+                isError
+            );
+        }
+
+        function openSettings() {
+            settingsBackdrop.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSettings() {
+            settingsBackdrop.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
+        function fillSettings(settings) {
+            settingsKeys.forEach((key) => {
+                const input =
+                    settingsForm.elements[key];
+
+                if (!input) {
+                    return;
+                }
+
+                if (input.type === 'checkbox') {
+                    input.checked = Boolean(settings[key]);
+                    return;
+                }
+
+                input.value = settings[key] ?? '';
+            });
+        }
+
+        function readSettingsForm() {
+            const settings = {};
+
+            settingsKeys.forEach((key) => {
+                const input =
+                    settingsForm.elements[key];
+
+                if (!input) {
+                    return;
+                }
+
+                if (input.type === 'checkbox') {
+                    settings[key] = input.checked;
+                } else if (input.type === 'number') {
+                    settings[key] = Number(input.value);
+                } else {
+                    settings[key] = input.value;
+                }
+            });
+
+            return settings;
+        }
+
+        async function loadSettings() {
+            try {
+                const settingsResponse =
+                    await fetch('/api/settings');
+
+                const settings =
+                    await settingsResponse.json();
+
+                fillSettings(settings);
+
+                const overlayResponse =
+                    await fetch('/api/overlay-url');
+
+                const overlayData =
+                    await overlayResponse.json();
+
+                overlayUrlInput.value =
+                    overlayData.url;
+
+                overlayFrame.src =
+                    overlayData.url;
+            } catch (error) {
+                showMessage(
+                    'No se pudieron cargar los settings.',
+                    true
+                );
+
+                console.error(error);
+            }
+        }
+
+        async function saveSettings(event) {
+            event.preventDefault();
+
+            try {
+                const settings =
+                    readSettingsForm();
+
+                const response =
+                    await fetch('/api/settings', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(settings)
+                    });
+
+                if (!response.ok) {
+                    throw new Error(
+                        'No se pudieron guardar los settings'
+                    );
+                }
+
+                const savedSettings =
+                    await response.json();
+
+                fillSettings(savedSettings);
+
+                showMessage(
+                    'Settings guardados correctamente.'
+                );
+            } catch (error) {
+                showMessage(
+                    error.message,
+                    true
+                );
+
+                console.error(error);
+            }
+        }
+
+        async function copyOverlayUrl() {
+            try {
+                await navigator.clipboard.writeText(
+                    overlayUrlInput.value
+                );
+
+                showMessage(
+                    'URL del overlay copiada.'
+                );
+            } catch (error) {
+                overlayUrlInput.select();
+                document.execCommand('copy');
+
+                showMessage(
+                    'URL del overlay copiada.'
+                );
+            }
+        }
+
+        async function connectTikTok() {
+            const username =
+                settingsForm.elements
+                    .tiktokUsername
+                    .value
+                    .trim();
+
+            if (!username) {
+                showMessage(
+                    'Escribe primero el usuario de TikTok.',
+                    true
+                );
+
+                return;
+            }
+
+            connectTikTokButton.disabled = true;
+            connectTikTokButton.textContent =
+                'Conectando...';
+
+            showMessage(
+                'Intentando conectar con TikTok...'
+            );
+
+            try {
+                const response =
+                    await fetch('/api/connect', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username
+                        })
+                    });
+
+                const result =
+                    await response.json();
+
+                if (!response.ok || !result.ok) {
+                    throw new Error(
+                        result.error ||
+                        'No se pudo conectar'
+                    );
+                }
+
+                showMessage(
+                    'Conexión iniciada correctamente.'
+                );
+            } catch (error) {
+                showMessage(
+                    `Error: ${error.message}`,
+                    true
+                );
+
+                console.error(error);
+            } finally {
+                connectTikTokButton.disabled = false;
+                connectTikTokButton.textContent =
+                    'Conectar TikTok';
+            }
+        }
+
+        async function resetGame() {
+            try {
+                await fetch('/api/reset', {
+                    method: 'POST'
+                });
+
+                showMessage(
+                    'Partida reiniciada.'
+                );
+            } catch (error) {
+                showMessage(
+                    'No se pudo reiniciar la partida.',
+                    true
+                );
+
+                console.error(error);
+            }
+        }
+
+        async function simulateEvent(type) {
+            const username =
+                `Viewer${viewerNumber}`;
+
+            viewerNumber += 1;
+
+            try {
+                await fetch(`/api/test/${type}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username,
+                        repeatCount: 1,
+                        diamondCount: 1
+                    })
+                });
+            } catch (error) {
+                console.error(
+                    'Error simulando evento:',
+                    error
+                );
+            }
+        }
+
+        openSettingsButton.addEventListener(
+            'click',
+            openSettings
+        );
+
+        closeSettingsButton.addEventListener(
+            'click',
+            closeSettings
+        );
+
+        settingsBackdrop.addEventListener(
+            'click',
+            (event) => {
+                if (
+                    event.target === settingsBackdrop
+                ) {
+                    closeSettings();
+                }
+            }
+        );
+
+        document.addEventListener(
+            'keydown',
+            (event) => {
+                if (event.key === 'Escape') {
+                    closeSettings();
+                }
+            }
+        );
+
+        settingsForm.addEventListener(
+            'submit',
+            saveSettings
+        );
+
+        copyOverlayButton.addEventListener(
+            'click',
+            copyOverlayUrl
+        );
+
+        connectTikTokButton.addEventListener(
+            'click',
+            connectTikTok
+        );
+
+        resetGameButton.addEventListener(
+            'click',
+            resetGame
+        );
+
+        simulateCommentButton.addEventListener(
+            'click',
+            () => simulateEvent('comment')
+        );
+
+        simulateGiftButton.addEventListener(
+            'click',
+            () => simulateEvent('gift')
+        );
+
+        loadSettings();
+    </script>
+</body>
+
+</html>

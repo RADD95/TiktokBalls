@@ -1,0 +1,17 @@
+{
+    "name": "tiktok-balls",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Interactive TikTok LIVE bouncing balls overlay",
+    "main": "src/server/app.js",
+    "scripts": {
+        "start": "node src/server/app.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "socket.io": "^4.8.1",
+        "tiktok-live-connector": "^2.4.3"
+    }
+}
