@@ -635,6 +635,56 @@ async function connect(username) {
     }
 }
 
+async function disconnect() {
+    if (!connection) {
+        isConnected = false;
+        isConnecting = false;
+
+        if (realtime) {
+            realtime.event({
+                type: 'connection',
+                status: 'disconnected',
+                username: currentUsername
+            });
+        }
+
+        return {
+            ok: true,
+            alreadyDisconnected: true
+        };
+    }
+
+    const disconnectedUsername =
+        currentUsername;
+
+    console.log(
+        `[TikTok] Desconectando de @${disconnectedUsername}...`
+    );
+
+    await disposeConnection();
+
+    currentUsername = null;
+    isConnected = false;
+    isConnecting = false;
+
+    if (realtime) {
+        realtime.event({
+            type: 'connection',
+            status: 'disconnected',
+            username: disconnectedUsername
+        });
+    }
+
+    console.log(
+        '[TikTok] Desconectado correctamente.'
+    );
+
+    return {
+        ok: true,
+        username: disconnectedUsername
+    };
+}
+
 function init(socketApi) {
     realtime = socketApi;
 
@@ -649,5 +699,6 @@ function init(socketApi) {
 
 module.exports = {
     init,
-    connect
+    connect,
+    disconnect
 };
