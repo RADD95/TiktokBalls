@@ -345,14 +345,54 @@
                                         Tamaño máximo
                                     </label>
 
-                <label>
-                    Puntos necesarios para crecer
-                    <input
-                        name="pointsPerRadius"
-                        type="number"
-                        min="0"
-                        step="0.1">
-                </label>
+                                    <input
+                                        name="maxRadius"
+                                        type="number"
+                                        min="0"
+                                        step="1">
+                                </div>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Puntos para crecer
+                                    </label>
+
+                                    <input
+                                        name="pointsPerRadius"
+                                        type="number"
+                                        min="0.1"
+                                        step="0.1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Velocidad
+                                    </label>
+
+                                    <input
+                                        name="speed"
+                                        type="number"
+                                        min="0"
+                                        step="0.1">
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="section">
+                            <h3 class="section-heading">
+                                <span class="section-number">
+                                    4
+                                </span>
+
+                                Nombres
+                            </h3>
+
+                            <div class="field">
+                                <label>
+                                    Fuente de los nombres
+                                </label>
 
                                 <select
                                     name="nameFontFamily">

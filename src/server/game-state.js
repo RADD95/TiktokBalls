@@ -76,19 +76,33 @@ function getColor(id) {
 
 function calculateRadius(points, settings) {
     const baseRadius =
-        number(
-            settings.baseRadius,
-            24
-        );
+        Number(settings.baseRadius) || 24;
 
     const pointsPerRadius =
         Number(settings.pointsPerRadius) || 4;
 
-    return Math.max(
-        baseRadius,
-        baseRadius +
-        Math.sqrt(Math.max(0, points)) *
-        pointsPerRadius
+    const maxRadius =
+        Number(settings.maxRadius);
+
+    const growth =
+        Math.sqrt(
+            Math.max(0, points) /
+            pointsPerRadius
+        ) * 12;
+
+    const calculatedRadius =
+        baseRadius + growth;
+
+    if (
+        !Number.isFinite(maxRadius) ||
+        maxRadius <= 0
+    ) {
+        return calculatedRadius;
+    }
+
+    return Math.min(
+        calculatedRadius,
+        maxRadius
     );
 }
 
@@ -329,16 +343,20 @@ function add(event, earnedPoints) {
             'Gift';
     }
 
-    player.radius =
-        calculateRadius(
-            player.points,
-            settings
-        );
+const calculatedRadius =
+    calculateRadius(
+        player.points,
+        settings
+    );
 
 const currentRadius =
-    Number(player.radius) ||
-    Number(settings.baseRadius) ||
-    24;
+    number(
+        player.radius,
+        number(
+            settings.baseRadius,
+            24
+        )
+    );
 
 player.radius =
     Math.max(
