@@ -1,527 +1,744 @@
 <!doctype html>
 <html lang="es">
-
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TikTok Balls - Test</title>
 
-    <style>
-        :root {
-            color-scheme: dark;
-        }
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1">
 
-        * {
-            box-sizing: border-box;
-        }
+    <title>TikTok Balls · Control</title>
 
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #111827;
-            color: #ffffff;
-            font: 16px Arial, sans-serif;
-        }
-
-        header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-height: 70px;
-            padding: 15px 18px;
-            background: #1f2937;
-            border-bottom: 1px solid #374151;
-        }
-
-        header strong {
-            margin-right: auto;
-        }
-
-        button {
-            padding: 10px 14px;
-            border: 0;
-            border-radius: 7px;
-            background: #5ee7ff;
-            color: #071018;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        button:hover {
-            filter: brightness(1.12);
-        }
-
-        button:disabled {
-            cursor: wait;
-            opacity: 0.6;
-        }
-
-        button.secondary {
-            background: #374151;
-            color: #ffffff;
-        }
-
-        button.danger {
-            background: #ef4444;
-            color: #ffffff;
-        }
-
-        iframe {
-            display: block;
-            width: 100vw;
-            height: calc(100vh - 70px);
-            border: 0;
-            background: transparent;
-        }
-
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            z-index: 20;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.7);
-        }
-
-        .modal-backdrop.visible {
-            display: flex;
-        }
-
-        .settings-modal {
-            position: relative;
-            width: min(620px, 100%);
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
-            padding: 25px;
-            border: 1px solid #374151;
-            border-radius: 15px;
-            background: #1b2030;
-            box-shadow: 0 20px 70px rgba(0, 0, 0, 0.5);
-        }
-
-        .settings-modal h2 {
-            margin: 0 0 6px;
-        }
-
-        .settings-modal > p {
-            margin-top: 0;
-            color: #9ca3af;
-        }
-
-        .settings-modal h3 {
-            margin: 24px 0 10px;
-            padding-bottom: 7px;
-            border-bottom: 1px solid #374151;
-            color: #5ee7ff;
-            font-size: 16px;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            width: 36px;
-            height: 36px;
-            padding: 0;
-            border-radius: 50%;
-            background: #374151;
-            color: #ffffff;
-            font-size: 22px;
-            line-height: 36px;
-        }
-
-        .settings-form label {
-            display: block;
-            margin: 14px 0;
-            color: #e5e7eb;
-        }
-
-        .settings-form input:not([type="checkbox"]) {
-            display: block;
-            width: 100%;
-            margin-top: 6px;
-            padding: 10px;
-            border: 1px solid #4b5563;
-            border-radius: 7px;
-            outline: none;
-            background: #10131d;
-            color: #ffffff;
-            font-size: 15px;
-        }
-
-        .settings-form input:not([type="checkbox"]):focus {
-            border-color: #5ee7ff;
-        }
-
-        .checkbox-row {
-            display: flex !important;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .checkbox-row input {
-            width: 17px;
-            height: 17px;
-        }
-
-        .settings-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 22px;
-            padding-top: 16px;
-            border-top: 1px solid #374151;
-        }
-
-        .overlay-url {
-            display: block;
-            width: 100%;
-            margin-top: 15px;
-            padding: 10px;
-            border: 1px solid #4b5563;
-            border-radius: 7px;
-            background: #10131d;
-            color: #d1d5db;
-        }
-
-        #settings-message {
-            min-height: 20px;
-            margin: 15px 0 0;
-            color: #8cff98;
-        }
-
-        #settings-message.error {
-            color: #ff8c8c;
-        }
-
-        @media (max-width: 700px) {
-            header {
-                flex-wrap: wrap;
-            }
-
-            header strong {
-                width: 100%;
-                margin-right: 0;
-            }
-
-            iframe {
-                height: calc(100vh - 115px);
-            }
-
-            .settings-modal {
-                padding: 20px;
-            }
-        }
-    </style>
+    <link
+        rel="stylesheet"
+        href="/test/index.css">
 </head>
 
 <body>
-    <header>
-        <strong>TikTok Balls · Test</strong>
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-icon">●</div>
 
-                            <button
-                        id="connect-tiktok"
-                        type="button">
-                        Conectar TikTok
-                    </button>
+            <div>
+                <span class="brand-title">
+                    TikTok Balls
+                </span>
 
+                <span class="brand-subtitle">
+                    Control panel · overlay 800 × 600
+                </span>
+            </div>
+        </div>
 
-        <button id="simulate-comment">
-            Comentario
-        </button>
+        <div
+            id="connection-status"
+            class="connection-pill">
+            Desconectado
+        </div>
 
-        <button id="simulate-gift">
-            Gift
-        </button>
-
-        <button id="open-settings" class="secondary">
-            ⚙ Settings
+        <button
+            id="connect-tiktok"
+            class="primary"
+            type="button">
+            Conectar TikTok
         </button>
     </header>
 
-    <iframe
-        id="overlay-frame"
-        title="TikTok Balls Overlay">
-    </iframe>
+    <main class="page">
+        <div class="layout">
+            <section class="card preview-card">
+                <div class="card-header">
+                    <div>
+                        <h1 class="card-title">
+                            Preview del overlay
+                        </h1>
 
-    <div
-        id="settings-backdrop"
-        class="modal-backdrop">
-
-        <section
-            class="settings-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="settings-title">
-
-            <button
-                id="close-settings"
-                class="close-modal"
-                type="button"
-                title="Cerrar settings">
-                ×
-            </button>
-
-            <h2 id="settings-title">
-                Settings
-            </h2>
-
-            <p>
-                Configura los puntos y multiplicadores del juego.
-            </p>
-
-            <form
-                id="settings-form"
-                class="settings-form">
-
-                <h3>Conexión</h3>
-
-                <label>
-                    Usuario TikTok
-                    <input
-                        name="tiktokUsername"
-                        type="text"
-                        placeholder="usuario_sin_@"
-                        autocomplete="off">
-                </label>
-
-                <h3>Comentarios</h3>
-
-                <label>
-                    Puntos base por comentario
-                    <input
-                        name="commentPoints"
-                        type="number"
-                        min="0"
-                        step="1">
-                </label>
-
-                <label>
-                    Multiplicador de comentarios
-                    <input
-                        name="commentMultiplier"
-                        type="number"
-                        min="0"
-                        step="0.1">
-                </label>
-
-                <h3>Likes</h3>
-
-                <label>
-                    Puntos base por like
-                    <input
-                        name="likePoints"
-                        type="number"
-                        min="0"
-                        step="1">
-                </label>
-
-                <label>
-                    Multiplicador de likes
-                    <input
-                        name="likeMultiplier"
-                        type="number"
-                        min="0"
-                        step="0.1">
-                </label>
-
-                <h3>Follows</h3>
-
-                <label>
-                    Puntos base por follow
-                    <input
-                        name="followPoints"
-                        type="number"
-                        min="0"
-                        step="1">
-                </label>
-
-                <label>
-                    Multiplicador de follows
-                    <input
-                        name="followMultiplier"
-                        type="number"
-                        min="0"
-                        step="0.1">
-                </label>
-
-                <h3>Shares</h3>
-
-                <label>
-                    Puntos base por share
-                    <input
-                        name="sharePoints"
-                        type="number"
-                        min="0"
-                        step="1">
-                </label>
-
-                <label>
-                    Multiplicador de shares
-                    <input
-                        name="shareMultiplier"
-                        type="number"
-                        min="0"
-                        step="0.1">
-                </label>
-
-                <h3>Gifts</h3>
-
-                <label>
-                    Puntos base por unidad de gift
-                    <input
-                        name="giftPoints"
-                        type="number"
-                        min="0"
-                        step="1">
-                </label>
-
-                <label>
-                    Multiplicador de gifts
-                    <input
-                        name="giftMultiplier"
-                        type="number"
-                        min="0"
-                        step="0.1">
-                </label>
-
-                <h3>Juego</h3>
-
-                <label>
-                    Límite de puntos por minuto
-                    <input
-                        name="maxPointsPerMinute"
-                        type="number"
-                        min="0"
-                        step="1">
-                </label>
-
-                <label>
-                    Tamaño base de las bolitas
-                    <input
-                        name="baseRadius"
-                        type="number"
-                        min="5"
-                        step="1">
-                </label>
-
-                <label>
-                    Puntos necesarios para crecer
-                    <input
-                        name="pointsPerRadius"
-                        type="number"
-                        min="0"
-                        step="0.1">
-                </label>
-
-                <label>
-                    Tamaño máximo
-                    <input
-                        name="maxRadius"
-                        type="number"
-                        min="10"
-                        step="1">
-                </label>
-
-                <label>
-                    Velocidad
-                    <input
-                        name="speed"
-                        type="number"
-                        min="0"
-                        step="0.1">
-                </label>
-
-                <label class="checkbox-row">
-                    <input
-                        name="showNames"
-                        type="checkbox">
-                    Mostrar nombres
-                </label>
-
-                <label class="checkbox-row">
-                    <input
-                        name="showLeaderboard"
-                        type="checkbox">
-                    Mostrar ranking
-                </label>
-
-                <label class="checkbox-row">
-    <input
-        name="showPodium"
-        type="checkbox">
-    Mostrar podio histórico
-</label>
-
-                <div class="settings-actions">
-                    <button type="submit">
-                        Guardar settings
-                    </button>
+                        <p class="card-description">
+                            Vista previa de lo que se carga en
+                            TikTok LIVE Studio.
+                        </p>
+                    </div>
 
                     <button
-                        id="copy-overlay-url"
+                        id="open-overlay"
+                        class="secondary"
                         type="button">
-                        Copiar URL del overlay
-                    </button>
-
-
-                    <button
-                        id="reset-game"
-                        type="button"
-                        class="danger">
-                        Reiniciar partida
+                        Abrir overlay
                     </button>
                 </div>
 
-                <input
-                    id="overlay-url"
-                    class="overlay-url"
-                    type="text"
-                    readonly>
+                <div class="preview-container">
+                    <iframe
+                        id="overlay-frame"
+                        class="preview-frame"
+                        title="TikTok Balls Overlay">
+                    </iframe>
 
-                <p id="settings-message"></p>
-            </form>
-        </section>
-    </div>
+                    <div class="preview-footer">
+                        <span>
+                            URL para TikTok LIVE Studio
+                        </span>
+
+                        <input
+                            id="overlay-url"
+                            class="overlay-url"
+                            type="text"
+                            readonly>
+                    </div>
+                </div>
+
+                <div class="live-stat">
+                    <div class="stat">
+                        <span class="stat-label">
+                            Estado
+                        </span>
+
+                        <span
+                            id="stat-status"
+                            class="stat-value">
+                            Offline
+                        </span>
+                    </div>
+
+                    <div class="stat">
+                        <span class="stat-label">
+                            Jugadores
+                        </span>
+
+                        <span
+                            id="stat-players"
+                            class="stat-value">
+                            0
+                        </span>
+                    </div>
+
+                    <div class="stat">
+                        <span class="stat-label">
+                            Eventos
+                        </span>
+
+                        <span
+                            id="stat-events"
+                            class="stat-value">
+                            0
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card settings-card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">
+                            Configuración
+                        </h2>
+
+                        <p class="card-description">
+                            Los cambios se guardan en el servidor.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="settings-scroll">
+                    <form
+                        id="settings-form"
+                        class="settings-form">
+
+                        <section class="section">
+                            <h3 class="section-heading">
+                                <span class="section-number">
+                                    1
+                                </span>
+
+                                Conexión
+                            </h3>
+
+                            <div class="field">
+                                <label>
+                                    Usuario de TikTok
+                                </label>
+
+                                <input
+                                    name="tiktokUsername"
+                                    type="text"
+                                    placeholder="usuario_sin_@"
+                                    autocomplete="off">
+                            </div>
+                        </section>
+
+                        <section class="section">
+                            <h3 class="section-heading">
+                                <span class="section-number">
+                                    2
+                                </span>
+
+                                Puntos
+                            </h3>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Comentario
+                                    </label>
+
+                                    <input
+                                        name="commentPoints"
+                                        type="number"
+                                        min="0"
+                                        step="1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Multiplicador
+                                    </label>
+
+                                    <input
+                                        name="commentMultiplier"
+                                        type="number"
+                                        min="0"
+                                        step="0.1">
+                                </div>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Like
+                                    </label>
+
+                                    <input
+                                        name="likePoints"
+                                        type="number"
+                                        min="0"
+                                        step="0.1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Multiplicador
+                                    </label>
+
+                                    <input
+                                        name="likeMultiplier"
+                                        type="number"
+                                        min="0"
+                                        step="0.1">
+                                </div>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Follow
+                                    </label>
+
+                                    <input
+                                        name="followPoints"
+                                        type="number"
+                                        min="0"
+                                        step="1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Multiplicador
+                                    </label>
+
+                                    <input
+                                        name="followMultiplier"
+                                        type="number"
+                                        min="0"
+                                        step="0.1">
+                                </div>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Share
+                                    </label>
+
+                                    <input
+                                        name="sharePoints"
+                                        type="number"
+                                        min="0"
+                                        step="1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Multiplicador
+                                    </label>
+
+                                    <input
+                                        name="shareMultiplier"
+                                        type="number"
+                                        min="0"
+                                        step="0.1">
+                                </div>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Gift por unidad
+                                    </label>
+
+                                    <input
+                                        name="giftPoints"
+                                        type="number"
+                                        min="0"
+                                        step="1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Multiplicador
+                                    </label>
+
+                                    <input
+                                        name="giftMultiplier"
+                                        type="number"
+                                        min="0"
+                                        step="0.1">
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label>
+                                    Límite de puntos por minuto
+                                </label>
+
+                                <input
+                                    name="maxPointsPerMinute"
+                                    type="number"
+                                    min="0"
+                                    step="1">
+                            </div>
+                        </section>
+
+                        <section class="section">
+                            <h3 class="section-heading">
+                                <span class="section-number">
+                                    3
+                                </span>
+
+                                Juego
+                            </h3>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Tamaño base
+                                    </label>
+
+                                    <input
+                                        name="baseRadius"
+                                        type="number"
+                                        min="5"
+                                        step="1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Tamaño máximo
+                                    </label>
+
+                                    <input
+                                        name="maxRadius"
+                                        type="number"
+                                        min="0"
+                                        step="1">
+                                </div>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Puntos para crecer
+                                    </label>
+
+                                    <input
+                                        name="pointsPerRadius"
+                                        type="number"
+                                        min="0.1"
+                                        step="0.1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Velocidad
+                                    </label>
+
+                                    <input
+                                        name="speed"
+                                        type="number"
+                                        min="0"
+                                        step="0.1">
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="section">
+                            <h3 class="section-heading">
+                                <span class="section-number">
+                                    4
+                                </span>
+
+                                Nombres
+                            </h3>
+
+                            <div class="field">
+                                <label>
+                                    Fuente de los nombres
+                                </label>
+
+                                <select
+                                    name="nameFontFamily">
+                                    <option value="Arial">
+                                        Arial
+                                    </option>
+
+                                    <option value="Verdana">
+                                        Verdana
+                                    </option>
+
+                                    <option value="Tahoma">
+                                        Tahoma
+                                    </option>
+
+                                    <option value="Trebuchet MS">
+                                        Trebuchet MS
+                                    </option>
+
+                                    <option value="Georgia">
+                                        Georgia
+                                    </option>
+
+                                    <option value="Courier New">
+                                        Courier New
+                                    </option>
+
+                                    <option value="Impact">
+                                        Impact
+                                    </option>
+
+                                    <option value="Segoe UI">
+                                        Segoe UI
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Tamaño
+                                    </label>
+
+                                    <input
+                                        name="nameFontSize"
+                                        type="number"
+                                        min="8"
+                                        max="72"
+                                        step="1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Peso
+                                    </label>
+
+                                    <select
+                                        name="nameFontWeight">
+                                        <option value="400">
+                                            Normal
+                                        </option>
+
+                                        <option value="600">
+                                            Semi-bold
+                                        </option>
+
+                                        <option value="700">
+                                            Bold
+                                        </option>
+
+                                        <option value="900">
+                                            Black
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Color
+                                    </label>
+
+                                    <input
+                                        name="nameTextColor"
+                                        type="color">
+                                </div>
+
+                                <label class="checkbox-field">
+                                    <input
+                                        name="nameTextShadow"
+                                        type="checkbox">
+
+                                    Sombra
+                                </label>
+                            </div>
+                        </section>
+
+                        <section class="section">
+                            <h3 class="section-heading">
+                                <span class="section-number">
+                                    5
+                                </span>
+
+                                Chat
+                            </h3>
+
+                            <label class="checkbox-field">
+                                <input
+                                    name="showChat"
+                                    type="checkbox">
+
+                                Mostrar mensajes
+                            </label>
+
+                            <div class="field">
+                                <label>
+                                    Fuente del chat
+                                </label>
+
+                                <select
+                                    name="chatFontFamily">
+                                    <option value="Arial">
+                                        Arial
+                                    </option>
+
+                                    <option value="Verdana">
+                                        Verdana
+                                    </option>
+
+                                    <option value="Tahoma">
+                                        Tahoma
+                                    </option>
+
+                                    <option value="Trebuchet MS">
+                                        Trebuchet MS
+                                    </option>
+
+                                    <option value="Georgia">
+                                        Georgia
+                                    </option>
+
+                                    <option value="Courier New">
+                                        Courier New
+                                    </option>
+
+                                    <option value="Impact">
+                                        Impact
+                                    </option>
+
+                                    <option value="Segoe UI">
+                                        Segoe UI
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Tamaño
+                                    </label>
+
+                                    <input
+                                        name="chatFontSize"
+                                        type="number"
+                                        min="8"
+                                        max="72"
+                                        step="1">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Peso
+                                    </label>
+
+                                    <select
+                                        name="chatFontWeight">
+                                        <option value="400">
+                                            Normal
+                                        </option>
+
+                                        <option value="600">
+                                            Semi-bold
+                                        </option>
+
+                                        <option value="700">
+                                            Bold
+                                        </option>
+
+                                        <option value="900">
+                                            Black
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Color
+                                    </label>
+
+                                    <input
+                                        name="chatTextColor"
+                                        type="color">
+                                </div>
+
+                                <label class="checkbox-field">
+                                    <input
+                                        name="chatTextShadow"
+                                        type="checkbox">
+
+                                    Sombra
+                                </label>
+                            </div>
+                        </section>
+
+                        <section class="section">
+                            <h3 class="section-heading">
+                                <span class="section-number">
+                                    6
+                                </span>
+
+                                Visualización
+                            </h3>
+
+                            <label class="checkbox-field">
+                                <input
+                                    name="showNames"
+                                    type="checkbox">
+
+                                Mostrar nombres
+                            </label>
+
+                            <label class="checkbox-field">
+                                <input
+                                    name="showPoints"
+                                    type="checkbox">
+
+                                Mostrar puntos
+                            </label>
+
+                            <label class="checkbox-field">
+                                <input
+                                    name="showLeaderboard"
+                                    type="checkbox">
+
+                                Mostrar ranking
+                            </label>
+
+                            <label class="checkbox-field">
+                                <input
+                                    name="showPodium"
+                                    type="checkbox">
+
+                                Mostrar podio histórico
+                            </label>
+                        </section>
+
+                        <div class="settings-actions">
+                            <button
+                                class="primary"
+                                type="submit">
+                                Guardar settings
+                            </button>
+
+                            <button
+                                id="reset-game"
+                                class="danger"
+                                type="button">
+                                Reiniciar partida
+                            </button>
+                        </div>
+
+                        <p
+                            id="settings-message"
+                            class="message">
+                        </p>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
 
     <script>
+        const form =
+            document.querySelector(
+                '#settings-form'
+            );
+
+        const message =
+            document.querySelector(
+                '#settings-message'
+            );
+
+        const connectionStatus =
+            document.querySelector(
+                '#connection-status'
+            );
+
+        const connectButton =
+            document.querySelector(
+                '#connect-tiktok'
+            );
+
         const overlayFrame =
-            document.querySelector('#overlay-frame');
+            document.querySelector(
+                '#overlay-frame'
+            );
 
-        const openSettingsButton =
-            document.querySelector('#open-settings');
+        const overlayUrl =
+            document.querySelector(
+                '#overlay-url'
+            );
 
-        const closeSettingsButton =
-            document.querySelector('#close-settings');
+        const openOverlayButton =
+            document.querySelector(
+                '#open-overlay'
+            );
 
-        const settingsBackdrop =
-            document.querySelector('#settings-backdrop');
+        const resetButton =
+            document.querySelector(
+                '#reset-game'
+            );
 
-        const settingsForm =
-            document.querySelector('#settings-form');
+        const statStatus =
+            document.querySelector(
+                '#stat-status'
+            );
 
-        const settingsMessage =
-            document.querySelector('#settings-message');
+        const statPlayers =
+            document.querySelector(
+                '#stat-players'
+            );
 
-        const overlayUrlInput =
-            document.querySelector('#overlay-url');
+        const statEvents =
+            document.querySelector(
+                '#stat-events'
+            );
 
-        const simulateCommentButton =
-            document.querySelector('#simulate-comment');
+        const socket =
+            io();
 
-        const simulateGiftButton =
-            document.querySelector('#simulate-gift');
-
-        const copyOverlayButton =
-            document.querySelector('#copy-overlay-url');
-
-        const connectTikTokButton =
-            document.querySelector('#connect-tiktok');
-
-        const resetGameButton =
-            document.querySelector('#reset-game');
+        let eventCount = 0;
 
         const settingsKeys = [
             'tiktokUsername',
@@ -549,92 +766,229 @@
             'speed',
 
             'showNames',
+            'showPoints',
             'showLeaderboard',
-            'showPodium'
+            'showPodium',
+            'showChat',
+
+            'nameFontFamily',
+            'nameFontSize',
+            'nameFontWeight',
+            'nameTextColor',
+            'nameTextShadow',
+
+            'chatFontFamily',
+            'chatFontSize',
+            'chatFontWeight',
+            'chatTextColor',
+            'chatTextShadow'
         ];
 
-        let viewerNumber = 1;
+        function showMessage(
+            text,
+            error = false
+        ) {
+            message.textContent =
+                text;
 
-        function showMessage(message, isError = false) {
-            settingsMessage.textContent = message;
-            settingsMessage.classList.toggle(
+            message.classList.toggle(
                 'error',
-                isError
+                error
             );
         }
 
-        function openSettings() {
-            settingsBackdrop.classList.add('visible');
-            document.body.style.overflow = 'hidden';
-        }
+        function setConnectionState(state) {
+            const connected =
+                Boolean(
+                    state?.connected
+                );
 
-        function closeSettings() {
-            settingsBackdrop.classList.remove('visible');
-            document.body.style.overflow = '';
+            const connecting =
+                Boolean(
+                    state?.connecting
+                );
+
+            const hasError =
+                Boolean(
+                    state?.error ||
+                    state?.status === 'error'
+                );
+
+            connectionStatus.className =
+                'connection-pill';
+
+            if (connected) {
+                connectionStatus.classList.add(
+                    'connected'
+                );
+            } else if (connecting) {
+                connectionStatus.classList.add(
+                    'connecting'
+                );
+            } else if (hasError) {
+                connectionStatus.classList.add(
+                    'error'
+                );
+            }
+
+            connectButton.disabled =
+                connecting;
+
+            if (connecting) {
+                connectionStatus.textContent =
+                    'Conectando...';
+
+                connectButton.textContent =
+                    'Conectando...';
+
+                statStatus.textContent =
+                    'Conectando';
+
+                return;
+            }
+
+            if (connected) {
+                const username =
+                    state.username
+                        ? `@${state.username}`
+                        : '';
+
+                connectionStatus.textContent =
+                    `Conectado ${username}`;
+
+                connectButton.textContent =
+                    'Desconectar TikTok';
+
+                statStatus.textContent =
+                    'Online';
+
+                return;
+            }
+
+            if (hasError) {
+                connectionStatus.textContent =
+                    'Error de conexión';
+
+                connectButton.textContent =
+                    'Conectar TikTok';
+
+                statStatus.textContent =
+                    'Error';
+
+                return;
+            }
+
+            connectionStatus.textContent =
+                'Desconectado';
+
+            connectButton.textContent =
+                'Conectar TikTok';
+
+            statStatus.textContent =
+                'Offline';
         }
 
         function fillSettings(settings) {
-            settingsKeys.forEach((key) => {
+            for (
+                const key of settingsKeys
+            ) {
                 const input =
-                    settingsForm.elements[key];
+                    form.elements[key];
 
                 if (!input) {
-                    return;
+                    continue;
                 }
 
-                if (input.type === 'checkbox') {
-                    input.checked = Boolean(settings[key]);
-                    return;
+                if (
+                    input.type === 'checkbox'
+                ) {
+                    input.checked =
+                        Boolean(
+                            settings[key]
+                        );
+                } else {
+                    input.value =
+                        settings[key] ?? '';
                 }
-
-                input.value = settings[key] ?? '';
-            });
+            }
         }
 
-        function readSettingsForm() {
+        function readSettings() {
             const settings = {};
 
-            settingsKeys.forEach((key) => {
+            for (
+                const key of settingsKeys
+            ) {
                 const input =
-                    settingsForm.elements[key];
+                    form.elements[key];
 
                 if (!input) {
-                    return;
+                    continue;
                 }
 
-                if (input.type === 'checkbox') {
-                    settings[key] = input.checked;
-                } else if (input.type === 'number') {
-                    settings[key] = Number(input.value);
+                if (
+                    input.type === 'checkbox'
+                ) {
+                    settings[key] =
+                        input.checked;
+                } else if (
+                    input.type === 'number'
+                ) {
+                    settings[key] =
+                        Number(
+                            input.value
+                        );
                 } else {
-                    settings[key] = input.value;
+                    settings[key] =
+                        input.value;
                 }
-            });
+            }
 
             return settings;
         }
 
         async function loadSettings() {
             try {
-                const settingsResponse =
-                    await fetch('/api/settings');
+                const response =
+                    await fetch(
+                        '/api/settings'
+                    );
 
                 const settings =
-                    await settingsResponse.json();
+                    await response.json();
 
-                fillSettings(settings);
+                fillSettings(
+                    settings
+                );
 
-                const overlayResponse =
-                    await fetch('/api/overlay-url');
+                const fallbackUrl =
+                    `${location.origin}/overlay`;
 
-                const overlayData =
-                    await overlayResponse.json();
-
-                overlayUrlInput.value =
-                    overlayData.url;
+                overlayUrl.value =
+                    fallbackUrl;
 
                 overlayFrame.src =
-                    overlayData.url;
+                    fallbackUrl;
+
+                try {
+                    const connectionResponse =
+                        await fetch(
+                            '/api/connection'
+                        );
+
+                    if (
+                        connectionResponse.ok
+                    ) {
+                        setConnectionState(
+                            await connectionResponse.json()
+                        );
+                    }
+                } catch {
+                    setConnectionState({
+                        connected: false,
+                        connecting: false
+                    });
+                }
             } catch (error) {
                 showMessage(
                     'No se pudieron cargar los settings.',
@@ -649,28 +1003,35 @@
             event.preventDefault();
 
             try {
-                const settings =
-                    readSettingsForm();
-
                 const response =
-                    await fetch('/api/settings', {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(settings)
-                    });
+                    await fetch(
+                        '/api/settings',
+                        {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type':
+                                    'application/json'
+                            },
+                            body: JSON.stringify(
+                                readSettings()
+                            )
+                        }
+                    );
+
+                const result =
+                    await response.json();
 
                 if (!response.ok) {
                     throw new Error(
-                        'No se pudieron guardar los settings'
+                        result.error ||
+                        'No se pudieron guardar los settings.'
                     );
                 }
 
-                const savedSettings =
-                    await response.json();
-
-                fillSettings(savedSettings);
+                fillSettings(
+                    result.settings ||
+                    result
+                );
 
                 showMessage(
                     'Settings guardados correctamente.'
@@ -680,33 +1041,12 @@
                     error.message,
                     true
                 );
-
-                console.error(error);
-            }
-        }
-
-        async function copyOverlayUrl() {
-            try {
-                await navigator.clipboard.writeText(
-                    overlayUrlInput.value
-                );
-
-                showMessage(
-                    'URL del overlay copiada.'
-                );
-            } catch (error) {
-                overlayUrlInput.select();
-                document.execCommand('copy');
-
-                showMessage(
-                    'URL del overlay copiada.'
-                );
             }
         }
 
         async function connectTikTok() {
             const username =
-                settingsForm.elements
+                form.elements
                     .tiktokUsername
                     .value
                     .trim();
@@ -720,160 +1060,243 @@
                 return;
             }
 
-            connectTikTokButton.disabled = true;
-            connectTikTokButton.textContent =
-                'Conectando...';
-
-            showMessage(
-                'Intentando conectar con TikTok...'
-            );
+            setConnectionState({
+                connected: false,
+                connecting: true,
+                username
+            });
 
             try {
                 const response =
-                    await fetch('/api/connect', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            username
-                        })
-                    });
+                    await fetch(
+                        '/api/connect',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type':
+                                    'application/json'
+                            },
+                            body: JSON.stringify({
+                                username
+                            })
+                        }
+                    );
 
                 const result =
                     await response.json();
 
-                if (!response.ok || !result.ok) {
+                if (
+                    !response.ok ||
+                    !result.ok
+                ) {
                     throw new Error(
                         result.error ||
-                        'No se pudo conectar'
+                        'No se pudo conectar.'
                     );
                 }
 
+                setConnectionState({
+                    connected: true,
+                    connecting: false,
+                    username:
+                        result.username ||
+                        username,
+                    status: 'connected'
+                });
+
                 showMessage(
-                    'Conexión iniciada correctamente.'
+                    'TikTok conectado correctamente.'
+                );
+            } catch (error) {
+                setConnectionState({
+                    connected: false,
+                    connecting: false,
+                    username,
+                    status: 'error',
+                    error: error.message
+                });
+
+                showMessage(
+                    error.message,
+                    true
+                );
+            }
+        }
+
+        async function disconnectTikTok() {
+            connectButton.disabled =
+                true;
+
+            connectButton.textContent =
+                'Desconectando...';
+
+            try {
+                const response =
+                    await fetch(
+                        '/api/disconnect',
+                        {
+                            method: 'POST'
+                        }
+                    );
+
+                const result =
+                    await response.json();
+
+                if (
+                    !response.ok ||
+                    result.ok === false
+                ) {
+                    throw new Error(
+                        result.error ||
+                        'No se pudo desconectar.'
+                    );
+                }
+
+                setConnectionState({
+                    connected: false,
+                    connecting: false,
+                    status: 'disconnected'
+                });
+
+                showMessage(
+                    'TikTok desconectado.'
                 );
             } catch (error) {
                 showMessage(
-                    `Error: ${error.message}`,
+                    error.message,
                     true
                 );
-
-                console.error(error);
             } finally {
-                connectTikTokButton.disabled = false;
-                connectTikTokButton.textContent =
-                    'Conectar TikTok';
+                connectButton.disabled =
+                    false;
+            }
+        }
+
+        async function toggleConnection() {
+            const connected =
+                connectionStatus.classList.contains(
+                    'connected'
+                );
+
+            if (connected) {
+                await disconnectTikTok();
+            } else {
+                await connectTikTok();
             }
         }
 
         async function resetGame() {
+            if (
+                !window.confirm(
+                    '¿Reiniciar la partida actual?'
+                )
+            ) {
+                return;
+            }
+
             try {
-                await fetch('/api/reset', {
-                    method: 'POST'
-                });
+                const response =
+                    await fetch(
+                        '/api/reset',
+                        {
+                            method: 'POST'
+                        }
+                    );
+
+                if (!response.ok) {
+                    throw new Error(
+                        'No se pudo reiniciar la partida.'
+                    );
+                }
 
                 showMessage(
                     'Partida reiniciada.'
                 );
             } catch (error) {
                 showMessage(
-                    'No se pudo reiniciar la partida.',
+                    error.message,
                     true
                 );
-
-                console.error(error);
             }
         }
 
-        async function simulateEvent(type) {
-            const username =
-                `Viewer${viewerNumber}`;
+        function handleState(state) {
+            if (!state) {
+                return;
+            }
 
-            viewerNumber += 1;
+            const players =
+                state.players ||
+                state.game?.players ||
+                [];
 
-            try {
-                await fetch(`/api/test/${type}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username,
-                        repeatCount: 1,
-                        diamondCount: 1
-                    })
-                });
-            } catch (error) {
-                console.error(
-                    'Error simulando evento:',
-                    error
+            statPlayers.textContent =
+                players.length;
+
+            if (state.connection) {
+                setConnectionState(
+                    state.connection
                 );
             }
         }
 
-        openSettingsButton.addEventListener(
-            'click',
-            openSettings
+        socket.on(
+            'state:init',
+            handleState
         );
 
-        closeSettingsButton.addEventListener(
-            'click',
-            closeSettings
+        socket.on(
+            'state:update',
+            handleState
         );
 
-        settingsBackdrop.addEventListener(
-            'click',
-            (event) => {
-                if (
-                    event.target === settingsBackdrop
-                ) {
-                    closeSettings();
-                }
+        socket.on(
+            'state',
+            handleState
+        );
+
+        socket.on(
+            'connection',
+            setConnectionState
+        );
+
+        socket.on(
+            'activity',
+            () => {
+                eventCount += 1;
+
+                statEvents.textContent =
+                    eventCount;
             }
         );
 
-        document.addEventListener(
-            'keydown',
-            (event) => {
-                if (event.key === 'Escape') {
-                    closeSettings();
-                }
-            }
-        );
-
-        settingsForm.addEventListener(
+        form.addEventListener(
             'submit',
             saveSettings
         );
 
-        copyOverlayButton.addEventListener(
+        connectButton.addEventListener(
             'click',
-            copyOverlayUrl
+            toggleConnection
         );
 
-        connectTikTokButton.addEventListener(
-            'click',
-            connectTikTok
-        );
-
-        resetGameButton.addEventListener(
+        resetButton.addEventListener(
             'click',
             resetGame
         );
 
-        simulateCommentButton.addEventListener(
+        openOverlayButton.addEventListener(
             'click',
-            () => simulateEvent('comment')
-        );
-
-        simulateGiftButton.addEventListener(
-            'click',
-            () => simulateEvent('gift')
+            () => {
+                window.open(
+                    overlayUrl.value,
+                    '_blank',
+                    'noopener,noreferrer'
+                );
+            }
         );
 
         loadSettings();
     </script>
 </body>
-
 </html>

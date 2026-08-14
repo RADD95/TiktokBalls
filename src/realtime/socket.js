@@ -11,95 +11,121 @@ module.exports = function createSocketApi(
         );
     }
 
-    function scheduleRoundReset() {
-        if (roundResetTimer) {
-            clearTimeout(roundResetTimer);
+    function clearRoundResetTimer() {
+        if (!roundResetTimer) {
+            return;
         }
 
-        roundResetTimer = setTimeout(() => {
-            gameState.reset();
-
-            io.emit('game:round-reset');
-
-            broadcastState();
-
-            roundResetTimer = null;
-        }, 8000);
-    }
-
-    io.on('connection', (socket) => {
-        socket.emit(
-            'state:init',
-            gameState.snapshot()
+        clearTimeout(
+            roundResetTimer
         );
 
-        socket.on('game:eat', (payload = {}) => {
-            const result = gameState.consume(
-                payload.eaterId,
-                payload.targetId
-            );
+        roundResetTimer = null;
+    }
 
-            if (!result.ok) {
-                socket.emit(
-                    'game:eat-rejected',
-                    result
-                );
+    function scheduleRoundReset() {
+        clearRoundResetTimer();
 
-                return;
-            }
-
-            io.emit(
-                'game:eaten',
-                result
-            );
-
-            broadcastState();
-
-            if (result.winner) {
-                io.emit(
-                    'game:win',
-                    {
-                        winner: result.winner,
-                        state: result.state
-                    }
-                );
-
-                scheduleRoundReset();
-            }
-        });
-
-        socket.on(
-            'game:claim-win',
-            (payload = {}) => {
-                const result =
-                    gameState.claimWinner(
-                        payload.playerId,
-                        payload.viewportMin,
-                        payload.radius
-                    );
-
-                if (!result.ok) {
-                    socket.emit(
-                        'game:win-rejected',
-                        result
-                    );
-
-                    return;
-                }
+        roundResetTimer = setTimeout(
+            () => {
+                gameState.reset();
 
                 io.emit(
-                    'game:win',
-                    {
-                        winner: result.winner,
-                        state: result.state
-                    }
+                    'game:round-reset'
                 );
 
                 broadcastState();
-                scheduleRoundReset();
-            }
+
+                roundResetTimer = null;
+            },
+            8000
         );
-    });
+    }
+
+    function emitTickResult(result) {
+        if (!result) {
+            broadcastState();
+
+            return;
+        }
+
+        for (
+            const eaten of result.eaten || []
+        ) {
+            io.emit(
+                'game:eaten',
+                eaten
+            );
+        }
+
+        for (
+            const winner of result.winners || []
+        ) {
+            io.emit(
+                'game:win',
+                {
+                    winner,
+                    state:
+                        gameState.snapshot()
+                }
+            );
+
+            scheduleRoundReset();
+        }
+
+        broadcastState();
+    }
+
+    function tick(deltaSeconds = 0.05) {
+        const result =
+            gameState.tick(
+                deltaSeconds
+            );
+
+        emitTickResult(
+            result
+        );
+
+        return result;
+    }
+
+    io.on(
+        'connection',
+        (socket) => {
+            socket.emit(
+                'state:init',
+                gameState.snapshot()
+            );
+
+            socket.on(
+                'game:eat',
+                () => {
+                    socket.emit(
+                        'game:eat-rejected',
+                        {
+                            ok: false,
+                            reason:
+                                'server_authoritative'
+                        }
+                    );
+                }
+            );
+
+            socket.on(
+                'game:claim-win',
+                () => {
+                    socket.emit(
+                        'game:win-rejected',
+                        {
+                            ok: false,
+                            reason:
+                                'server_authoritative'
+                        }
+                    );
+                }
+            );
+        }
+    );
 
     return {
         event(event) {
@@ -113,21 +139,38 @@ module.exports = function createSocketApi(
             broadcastState();
         },
 
-        reset() {
-            if (roundResetTimer) {
-                clearTimeout(roundResetTimer);
-                roundResetTimer = null;
-            }
+        tick(deltaSeconds = 0.05) {
+            return tick(
+                deltaSeconds
+            );
+        },
 
-            io.emit('game:reset');
+        reset() {
+            clearRoundResetTimer();
+
+            io.emit(
+                'game:reset'
+            );
         },
 
         roundReset() {
+            clearRoundResetTimer();
+
             gameState.reset();
 
-            io.emit('game:round-reset');
+            io.emit(
+                'game:round-reset'
+            );
 
             broadcastState();
+        },
+
+        scheduleRoundReset() {
+            scheduleRoundReset();
+        },
+
+        clearRoundReset() {
+            clearRoundResetTimer();
         }
     };
 };
