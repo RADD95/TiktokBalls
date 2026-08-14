@@ -1,617 +1,717 @@
-        const form =
-            document.querySelector(
-                '#settings-form'
-            );
+const form =
+    document.querySelector(
+        '#settings-form'
+    );
 
-        const message =
-            document.querySelector(
-                '#settings-message'
-            );
+const message =
+    document.querySelector(
+        '#settings-message'
+    );
 
-        const connectionStatus =
-            document.querySelector(
-                '#connection-status'
-            );
+const connectionStatus =
+    document.querySelector(
+        '#connection-status'
+    );
 
-        const connectButton =
-            document.querySelector(
-                '#connect-tiktok'
-            );
+const connectButton =
+    document.querySelector(
+        '#connect-tiktok'
+    );
 
-        const overlayFrame =
-            document.querySelector(
-                '#overlay-frame'
-            );
+const overlayFrame =
+    document.querySelector(
+        '#overlay-frame'
+    );
 
-        const overlayUrl =
-            document.querySelector(
-                '#overlay-url'
-            );
+const overlayUrl =
+    document.querySelector(
+        '#overlay-url'
+    );
 
-        const openOverlayButton =
-            document.querySelector(
-                '#open-overlay'
-            );
+const rankingUrl =
+    document.querySelector(
+        '#ranking-url'
+    );
 
-        const resetButton =
-            document.querySelector(
-                '#reset-game'
-            );
+const podiumUrl =
+    document.querySelector(
+        '#podium-url'
+    );
 
-        const statStatus =
-            document.querySelector(
-                '#stat-status'
-            );
+const openOverlayButton =
+    document.querySelector(
+        '#open-overlay'
+    );
 
-        const statPlayers =
-            document.querySelector(
-                '#stat-players'
-            );
+const resetButton =
+    document.querySelector(
+        '#reset-game'
+    );
 
-        const statEvents =
-            document.querySelector(
-                '#stat-events'
-            );
+const statStatus =
+    document.querySelector(
+        '#stat-status'
+    );
 
-        const socket =
-            io();
+const statPlayers =
+    document.querySelector(
+        '#stat-players'
+    );
 
-        let eventCount = 0;
+const statEvents =
+    document.querySelector(
+        '#stat-events'
+    );
 
-        const settingsKeys = [
-            'tiktokUsername',
+const socket =
+    io();
 
-            'commentPoints',
-            'commentMultiplier',
+let eventCount = 0;
 
-            'likePoints',
-            'likeMultiplier',
+const settingsKeys = [
+    'tiktokUsername',
 
-            'followPoints',
-            'followMultiplier',
+    'width',
+    'height',
 
-            'sharePoints',
-            'shareMultiplier',
+    'commentPoints',
+    'commentMultiplier',
 
-            'giftPoints',
-            'giftMultiplier',
+    'likePoints',
+    'likeMultiplier',
 
-            'maxPointsPerMinute',
+    'followPoints',
+    'followMultiplier',
 
-            'baseRadius',
-            'pointsPerRadius',
-            'maxRadius',
-            'speed',
+    'sharePoints',
+    'shareMultiplier',
 
-            'showNames',
-            'showPoints',
-            'showLeaderboard',
-            'showPodium',
-            'showChat',
+    'giftPoints',
+    'giftMultiplier',
 
-            'nameFontFamily',
-            'nameFontSize',
-            'nameFontWeight',
-            'nameTextColor',
-            'nameTextShadow',
+    'maxPointsPerMinute',
 
-            'chatFontFamily',
-            'chatFontSize',
-            'chatFontWeight',
-            'chatTextColor',
-            'chatTextShadow'
-        ];
+    'baseRadius',
+    'pointsPerRadius',
+    'maxRadius',
+    'speed',
 
-        function showMessage(
-            text,
-            error = false
+    'showNames',
+    'showPoints',
+    'showLeaderboard',
+    'showPodium',
+    'showChat',
+
+    'nameFontFamily',
+    'nameFontSize',
+    'nameFontWeight',
+    'nameTextColor',
+    'nameTextShadow',
+
+    'chatFontFamily',
+    'chatFontSize',
+    'chatFontWeight',
+    'chatTextColor',
+    'chatTextShadow',
+
+
+    'rankingLimit',
+    'rankingFontFamily',
+    'rankingFontSize',
+    'rankingFontWeight',
+    'rankingTextColor',
+    'rankingTitleColor',
+    'rankingPointsColor',
+    'rankingTitleSize',
+
+
+    'podiumLimit',
+    'podiumFontFamily',
+    'podiumFontSize',
+    'podiumFontWeight',
+    'podiumTextColor',
+    'podiumTitleColor',
+    'podiumWinsColor',
+    'podiumTitleSize'
+];
+
+function showMessage(
+    text,
+    error = false
+) {
+    message.textContent =
+        text;
+
+    message.classList.toggle(
+        'error',
+        error
+    );
+}
+
+function setConnectionState(state) {
+    const connected =
+        Boolean(
+            state?.connected
+        );
+
+    const connecting =
+        Boolean(
+            state?.connecting
+        );
+
+    const hasError =
+        Boolean(
+            state?.error ||
+            state?.status === 'error'
+        );
+
+    connectionStatus.className =
+        'connection-pill';
+
+    if (connected) {
+        connectionStatus.classList.add(
+            'connected'
+        );
+    } else if (connecting) {
+        connectionStatus.classList.add(
+            'connecting'
+        );
+    } else if (hasError) {
+        connectionStatus.classList.add(
+            'error'
+        );
+    }
+
+    connectButton.disabled =
+        connecting;
+
+    if (connecting) {
+        connectionStatus.textContent =
+            'Conectando...';
+
+        connectButton.textContent =
+            'Conectando...';
+
+        statStatus.textContent =
+            'Conectando';
+
+        return;
+    }
+
+    if (connected) {
+        const username =
+            state.username
+                ? `@${state.username}`
+                : '';
+
+        connectionStatus.textContent =
+            `Conectado ${username}`;
+
+        connectButton.textContent =
+            'Desconectar TikTok';
+
+        statStatus.textContent =
+            'Online';
+
+        return;
+    }
+
+    if (hasError) {
+        connectionStatus.textContent =
+            'Error de conexión';
+
+        connectButton.textContent =
+            'Conectar TikTok';
+
+        statStatus.textContent =
+            'Error';
+
+        return;
+    }
+
+    connectionStatus.textContent =
+        'Desconectado';
+
+    connectButton.textContent =
+        'Conectar TikTok';
+
+    statStatus.textContent =
+        'Offline';
+}
+
+function fillSettings(settings) {
+    for (
+        const key of settingsKeys
+    ) {
+        const input =
+            form.elements[key];
+
+        if (!input) {
+            continue;
+        }
+
+        if (
+            input.type === 'checkbox'
         ) {
-            message.textContent =
-                text;
+            input.checked =
+                Boolean(
+                    settings[key]
+                );
+        } else {
+            input.value =
+                settings[key] ?? '';
+        }
+    }
+}
 
-            message.classList.toggle(
-                'error',
-                error
+function updateOverlayDimensions(
+    width,
+    height
+) {
+    const safeWidth =
+        Number(width) || 800;
+
+    const safeHeight =
+        Number(height) || 600;
+
+    const subtitle =
+        document.querySelector(
+            '.brand-subtitle'
+        );
+
+    if (subtitle) {
+        subtitle.textContent =
+            `Control panel · overlay ` +
+            `${safeWidth} × ${safeHeight}`;
+    }
+
+    const frame =
+        document.querySelector(
+            '#overlay-frame'
+        );
+
+    if (frame) {
+        frame.style.aspectRatio =
+            `${safeWidth} / ${safeHeight}`;
+    }
+}
+
+function readSettings() {
+    const settings = {};
+
+    for (
+        const key of settingsKeys
+    ) {
+        const input =
+            form.elements[key];
+
+        if (!input) {
+            continue;
+        }
+
+        if (
+            input.type === 'checkbox'
+        ) {
+            settings[key] =
+                input.checked;
+        } else if (
+            input.type === 'number'
+        ) {
+            settings[key] =
+                Number(
+                    input.value
+                );
+        } else {
+            settings[key] =
+                input.value;
+        }
+    }
+
+    return settings;
+}
+
+async function loadSettings() {
+    try {
+        const response =
+            await fetch(
+                '/api/settings'
             );
-        }
 
-        function setConnectionState(state) {
-            const connected =
-                Boolean(
-                    state?.connected
+        const settings =
+            await response.json();
+
+        fillSettings(
+            settings
+        );
+
+        updateOverlayDimensions(
+            settings.width,
+            settings.height
+        );
+
+const overlayBaseUrl =
+    `${location.origin}/overlay`;
+
+const rankingOverlayUrl =
+    `${location.origin}/overlay/ranking`;
+
+const podiumOverlayUrl =
+    `${location.origin}/overlay/podium`;
+
+overlayUrl.value =
+    overlayBaseUrl;
+
+rankingUrl.value =
+    rankingOverlayUrl;
+
+podiumUrl.value =
+    podiumOverlayUrl;
+
+overlayFrame.src =
+    overlayBaseUrl;
+
+        try {
+            const connectionResponse =
+                await fetch(
+                    '/api/connection'
                 );
 
-            const connecting =
-                Boolean(
-                    state?.connecting
-                );
-
-            const hasError =
-                Boolean(
-                    state?.error ||
-                    state?.status === 'error'
-                );
-
-            connectionStatus.className =
-                'connection-pill';
-
-            if (connected) {
-                connectionStatus.classList.add(
-                    'connected'
-                );
-            } else if (connecting) {
-                connectionStatus.classList.add(
-                    'connecting'
-                );
-            } else if (hasError) {
-                connectionStatus.classList.add(
-                    'error'
-                );
-            }
-
-            connectButton.disabled =
-                connecting;
-
-            if (connecting) {
-                connectionStatus.textContent =
-                    'Conectando...';
-
-                connectButton.textContent =
-                    'Conectando...';
-
-                statStatus.textContent =
-                    'Conectando';
-
-                return;
-            }
-
-            if (connected) {
-                const username =
-                    state.username
-                        ? `@${state.username}`
-                        : '';
-
-                connectionStatus.textContent =
-                    `Conectado ${username}`;
-
-                connectButton.textContent =
-                    'Desconectar TikTok';
-
-                statStatus.textContent =
-                    'Online';
-
-                return;
-            }
-
-            if (hasError) {
-                connectionStatus.textContent =
-                    'Error de conexión';
-
-                connectButton.textContent =
-                    'Conectar TikTok';
-
-                statStatus.textContent =
-                    'Error';
-
-                return;
-            }
-
-            connectionStatus.textContent =
-                'Desconectado';
-
-            connectButton.textContent =
-                'Conectar TikTok';
-
-            statStatus.textContent =
-                'Offline';
-        }
-
-        function fillSettings(settings) {
-            for (
-                const key of settingsKeys
+            if (
+                connectionResponse.ok
             ) {
-                const input =
-                    form.elements[key];
-
-                if (!input) {
-                    continue;
-                }
-
-                if (
-                    input.type === 'checkbox'
-                ) {
-                    input.checked =
-                        Boolean(
-                            settings[key]
-                        );
-                } else {
-                    input.value =
-                        settings[key] ?? '';
-                }
-            }
-        }
-
-        function readSettings() {
-            const settings = {};
-
-            for (
-                const key of settingsKeys
-            ) {
-                const input =
-                    form.elements[key];
-
-                if (!input) {
-                    continue;
-                }
-
-                if (
-                    input.type === 'checkbox'
-                ) {
-                    settings[key] =
-                        input.checked;
-                } else if (
-                    input.type === 'number'
-                ) {
-                    settings[key] =
-                        Number(
-                            input.value
-                        );
-                } else {
-                    settings[key] =
-                        input.value;
-                }
-            }
-
-            return settings;
-        }
-
-        async function loadSettings() {
-            try {
-                const response =
-                    await fetch(
-                        '/api/settings'
-                    );
-
-                const settings =
-                    await response.json();
-
-                fillSettings(
-                    settings
-                );
-
-                const fallbackUrl =
-                    `${location.origin}/overlay`;
-
-                overlayUrl.value =
-                    fallbackUrl;
-
-                overlayFrame.src =
-                    fallbackUrl;
-
-                try {
-                    const connectionResponse =
-                        await fetch(
-                            '/api/connection'
-                        );
-
-                    if (
-                        connectionResponse.ok
-                    ) {
-                        setConnectionState(
-                            await connectionResponse.json()
-                        );
-                    }
-                } catch {
-                    setConnectionState({
-                        connected: false,
-                        connecting: false
-                    });
-                }
-            } catch (error) {
-                showMessage(
-                    'No se pudieron cargar los settings.',
-                    true
-                );
-
-                console.error(error);
-            }
-        }
-
-        async function saveSettings(event) {
-            event.preventDefault();
-
-            try {
-                const response =
-                    await fetch(
-                        '/api/settings',
-                        {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type':
-                                    'application/json'
-                            },
-                            body: JSON.stringify(
-                                readSettings()
-                            )
-                        }
-                    );
-
-                const result =
-                    await response.json();
-
-                if (!response.ok) {
-                    throw new Error(
-                        result.error ||
-                        'No se pudieron guardar los settings.'
-                    );
-                }
-
-                fillSettings(
-                    result.settings ||
-                    result
-                );
-
-                showMessage(
-                    'Settings guardados correctamente.'
-                );
-            } catch (error) {
-                showMessage(
-                    error.message,
-                    true
+                setConnectionState(
+                    await connectionResponse.json()
                 );
             }
-        }
-
-        async function connectTikTok() {
-            const username =
-                form.elements
-                    .tiktokUsername
-                    .value
-                    .trim();
-
-            if (!username) {
-                showMessage(
-                    'Escribe primero el usuario de TikTok.',
-                    true
-                );
-
-                return;
-            }
-
+        } catch {
             setConnectionState({
                 connected: false,
-                connecting: true,
-                username
+                connecting: false
             });
+        }
+    } catch (error) {
+        showMessage(
+            'No se pudieron cargar los settings.',
+            true
+        );
 
-            try {
-                const response =
-                    await fetch(
-                        '/api/connect',
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type':
-                                    'application/json'
-                            },
-                            body: JSON.stringify({
-                                username
-                            })
-                        }
-                    );
+        console.error(error);
+    }
+}
 
-                const result =
-                    await response.json();
+async function saveSettings(event) {
+    event.preventDefault();
 
-                if (
-                    !response.ok ||
-                    !result.ok
-                ) {
-                    throw new Error(
-                        result.error ||
-                        'No se pudo conectar.'
-                    );
+    try {
+        const response =
+            await fetch(
+                '/api/settings',
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type':
+                            'application/json'
+                    },
+                    body: JSON.stringify(
+                        readSettings()
+                    )
                 }
+            );
 
-                setConnectionState({
-                    connected: true,
-                    connecting: false,
-                    username:
-                        result.username ||
-                        username,
-                    status: 'connected'
-                });
+        const result =
+            await response.json();
 
-                showMessage(
-                    'TikTok conectado correctamente.'
-                );
-            } catch (error) {
-                setConnectionState({
-                    connected: false,
-                    connecting: false,
-                    username,
-                    status: 'error',
-                    error: error.message
-                });
-
-                showMessage(
-                    error.message,
-                    true
-                );
-            }
+        if (!response.ok) {
+            throw new Error(
+                result.error ||
+                'No se pudieron guardar los settings.'
+            );
         }
 
-        async function disconnectTikTok() {
-            connectButton.disabled =
-                true;
+        const savedSettings =
+            result.settings ||
+            result;
 
-            connectButton.textContent =
-                'Desconectando...';
+        fillSettings(
+            savedSettings
+        );
 
-            try {
-                const response =
-                    await fetch(
-                        '/api/disconnect',
-                        {
-                            method: 'POST'
-                        }
-                    );
+        updateOverlayDimensions(
+            savedSettings.width,
+            savedSettings.height
+        );
 
-                const result =
-                    await response.json();
+        showMessage(
+            'Settings guardados correctamente.'
+        );
+    } catch (error) {
+        showMessage(
+            error.message,
+            true
+        );
+    }
+}
 
-                if (
-                    !response.ok ||
-                    result.ok === false
-                ) {
-                    throw new Error(
-                        result.error ||
-                        'No se pudo desconectar.'
-                    );
+async function connectTikTok() {
+    const username =
+        form.elements
+            .tiktokUsername
+            .value
+            .trim();
+
+    if (!username) {
+        showMessage(
+            'Escribe primero el usuario de TikTok.',
+            true
+        );
+
+        return;
+    }
+
+    setConnectionState({
+        connected: false,
+        connecting: true,
+        username
+    });
+
+    try {
+        const response =
+            await fetch(
+                '/api/connect',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':
+                            'application/json'
+                    },
+                    body: JSON.stringify({
+                        username
+                    })
                 }
+            );
 
-                setConnectionState({
-                    connected: false,
-                    connecting: false,
-                    status: 'disconnected'
-                });
+        const result =
+            await response.json();
 
-                showMessage(
-                    'TikTok desconectado.'
-                );
-            } catch (error) {
-                showMessage(
-                    error.message,
-                    true
-                );
-            } finally {
-                connectButton.disabled =
-                    false;
-            }
+        if (
+            !response.ok ||
+            !result.ok
+        ) {
+            throw new Error(
+                result.error ||
+                'No se pudo conectar.'
+            );
         }
 
-        async function toggleConnection() {
-            const connected =
-                connectionStatus.classList.contains(
-                    'connected'
-                );
+        setConnectionState({
+            connected: true,
+            connecting: false,
+            username:
+                result.username ||
+                username,
+            status: 'connected'
+        });
 
-            if (connected) {
-                await disconnectTikTok();
-            } else {
-                await connectTikTok();
-            }
-        }
+        showMessage(
+            'TikTok conectado correctamente.'
+        );
+    } catch (error) {
+        setConnectionState({
+            connected: false,
+            connecting: false,
+            username,
+            status: 'error',
+            error: error.message
+        });
 
-        async function resetGame() {
-            if (
-                !window.confirm(
-                    '¿Reiniciar la partida actual?'
-                )
-            ) {
-                return;
-            }
+        showMessage(
+            error.message,
+            true
+        );
+    }
+}
 
-            try {
-                const response =
-                    await fetch(
-                        '/api/reset',
-                        {
-                            method: 'POST'
-                        }
-                    );
+async function disconnectTikTok() {
+    connectButton.disabled =
+        true;
 
-                if (!response.ok) {
-                    throw new Error(
-                        'No se pudo reiniciar la partida.'
-                    );
+    connectButton.textContent =
+        'Desconectando...';
+
+    try {
+        const response =
+            await fetch(
+                '/api/disconnect',
+                {
+                    method: 'POST'
                 }
+            );
 
-                showMessage(
-                    'Partida reiniciada.'
-                );
-            } catch (error) {
-                showMessage(
-                    error.message,
-                    true
-                );
-            }
+        const result =
+            await response.json();
+
+        if (
+            !response.ok ||
+            result.ok === false
+        ) {
+            throw new Error(
+                result.error ||
+                'No se pudo desconectar.'
+            );
         }
 
-        function handleState(state) {
-            if (!state) {
-                return;
-            }
+        setConnectionState({
+            connected: false,
+            connecting: false,
+            status: 'disconnected'
+        });
 
-            const players =
-                state.players ||
-                state.game?.players ||
-                [];
+        showMessage(
+            'TikTok desconectado.'
+        );
+    } catch (error) {
+        showMessage(
+            error.message,
+            true
+        );
+    } finally {
+        connectButton.disabled =
+            false;
+    }
+}
 
-            statPlayers.textContent =
-                players.length;
+async function toggleConnection() {
+    const connected =
+        connectionStatus.classList.contains(
+            'connected'
+        );
 
-            if (state.connection) {
-                setConnectionState(
-                    state.connection
-                );
-            }
+    if (connected) {
+        await disconnectTikTok();
+    } else {
+        await connectTikTok();
+    }
+}
+
+async function resetGame() {
+    if (
+        !window.confirm(
+            '¿Reiniciar la partida actual?'
+        )
+    ) {
+        return;
+    }
+
+    try {
+        const response =
+            await fetch(
+                '/api/reset',
+                {
+                    method: 'POST'
+                }
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                'No se pudo reiniciar la partida.'
+            );
         }
 
-        socket.on(
-            'state:init',
-            handleState
+        showMessage(
+            'Partida reiniciada.'
         );
-
-        socket.on(
-            'state:update',
-            handleState
+    } catch (error) {
+        showMessage(
+            error.message,
+            true
         );
+    }
+}
 
-        socket.on(
-            'state',
-            handleState
+function handleState(state) {
+    if (!state) {
+        return;
+    }
+
+    const players =
+        state.players ||
+        state.game?.players ||
+        [];
+
+    statPlayers.textContent =
+        players.length;
+
+    if (state.connection) {
+        setConnectionState(
+            state.connection
         );
+    }
+}
 
-        socket.on(
-            'connection',
-            setConnectionState
+socket.on(
+    'arena:resize',
+    (size) => {
+        updateOverlayDimensions(
+            size.width,
+            size.height
         );
+    }
+);
 
-        socket.on(
-            'activity',
-            () => {
-                eventCount += 1;
+socket.on(
+    'state:init',
+    handleState
+);
 
-                statEvents.textContent =
-                    eventCount;
-            }
+socket.on(
+    'state:update',
+    handleState
+);
+
+socket.on(
+    'state',
+    handleState
+);
+
+socket.on(
+    'connection',
+    setConnectionState
+);
+
+socket.on(
+    'activity',
+    () => {
+        eventCount += 1;
+
+        statEvents.textContent =
+            eventCount;
+    }
+);
+
+form.addEventListener(
+    'submit',
+    saveSettings
+);
+
+connectButton.addEventListener(
+    'click',
+    toggleConnection
+);
+
+resetButton.addEventListener(
+    'click',
+    resetGame
+);
+
+openOverlayButton.addEventListener(
+    'click',
+    () => {
+        window.open(
+            overlayUrl.value,
+            '_blank',
+            'noopener,noreferrer'
         );
+    }
+);
 
-        form.addEventListener(
-            'submit',
-            saveSettings
-        );
-
-        connectButton.addEventListener(
-            'click',
-            toggleConnection
-        );
-
-        resetButton.addEventListener(
-            'click',
-            resetGame
-        );
-
-        openOverlayButton.addEventListener(
-            'click',
-            () => {
-                window.open(
-                    overlayUrl.value,
-                    '_blank',
-                    'noopener,noreferrer'
-                );
-            }
-        );
-
-        loadSettings();
+loadSettings();

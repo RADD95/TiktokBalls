@@ -20,8 +20,8 @@ const wins =
 const roundParticipants =
     new Set();
 
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
+const DEFAULT_WIDTH = 800;
+const DEFAULT_HEIGHT = 600;
 
 let roundNumber = 1;
 let roundStatus = 'playing';
@@ -60,6 +60,33 @@ function clamp(value, minimum, maximum) {
         minimum,
         Math.min(maximum, value)
     );
+}
+
+function getArenaSize() {
+    const settings =
+        get();
+
+    return {
+        width: Math.max(
+            320,
+            Math.min(
+                1920,
+                Number(
+                    settings.width
+                ) || DEFAULT_WIDTH
+            )
+        ),
+
+        height: Math.max(
+            240,
+            Math.min(
+                1920,
+                Number(
+                    settings.height
+                ) || DEFAULT_HEIGHT
+            )
+        )
+    };
 }
 
 function getColor(id) {
@@ -204,15 +231,15 @@ function createPlayer(event, settings) {
         color:
             getColor(playerId),
 
-        x:
-            0.12 +
-            Math.random() *
-            0.76,
+x:
+    0.12 +
+    Math.random() *
+    0.76,
 
-        y:
-            0.12 +
-            Math.random() *
-            0.76,
+y:
+    0.12 +
+    Math.random() *
+    0.76,
 
         vx:
             (
@@ -245,6 +272,8 @@ function createPlayer(event, settings) {
         lastEventAt: Date.now()
     };
 }
+
+
 
 function add(event, earnedPoints) {
     if (
@@ -472,19 +501,22 @@ function registerWinner(player) {
 }
 
 function distanceBetween(first, second) {
+    const arena =
+        getArenaSize();
+
     const dx =
         (
             first.x -
             second.x
         ) *
-        CANVAS_WIDTH;
+        arena.width;
 
     const dy =
         (
             first.y -
             second.y
         ) *
-        CANVAS_HEIGHT;
+        arena.height;
 
     return Math.sqrt(
         dx * dx +
@@ -686,11 +718,14 @@ function movePlayer(player, deltaSeconds) {
             24
         );
 
-    const normalizedRadiusX =
-        radius / CANVAS_WIDTH;
+const arena =
+    getArenaSize();
 
-    const normalizedRadiusY =
-        radius / CANVAS_HEIGHT;
+const normalizedRadiusX =
+    radius / arena.width;
+
+const normalizedRadiusY =
+    radius / arena.height;
 
     player.x +=
         player.vx *
@@ -702,29 +737,17 @@ function movePlayer(player, deltaSeconds) {
         deltaSeconds *
         speed;
 
-    const minX =
-        Math.max(
-            0.02,
-            normalizedRadiusX
-        );
+const minX =
+    normalizedRadiusX;
 
-    const maxX =
-        Math.min(
-            0.98,
-            1 - normalizedRadiusX
-        );
+const maxX =
+    1 - normalizedRadiusX;
 
-    const minY =
-        Math.max(
-            0.03,
-            normalizedRadiusY
-        );
+const minY =
+    normalizedRadiusY;
 
-    const maxY =
-        Math.min(
-            0.97,
-            1 - normalizedRadiusY
-        );
+const maxY =
+    1 - normalizedRadiusY;
 
     if (
         player.x <= minX ||

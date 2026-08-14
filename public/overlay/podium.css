@@ -1,0 +1,133 @@
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+    color: var(
+        --podium-text-color,
+        #ffffff
+    );
+    font-family:
+        var(
+            --podium-font-family,
+            Verdana
+        ),
+        Arial,
+        sans-serif;
+}
+
+
+#podium {
+    position: fixed;
+    inset: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+}
+
+
+.podium-panel {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px;
+    box-sizing: border-box;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.58);
+}
+
+
+.podium-title {
+    margin: 0 0 18px;
+    color: var(
+        --podium-title-color,
+        #ffe66d
+    );
+    font-family:
+        var(
+            --podium-font-family,
+            Verdana
+        ),
+        Arial,
+        sans-serif;
+    font-size: var(
+        --podium-title-size,
+        32px
+    );
+    font-weight: 800;
+}
+
+
+.podium-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-height: 58px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(
+        255,
+        255,
+        255,
+        0.12
+    );
+    color: var(
+        --podium-text-color,
+        #ffffff
+    );
+    font-family:
+        var(
+            --podium-font-family,
+            Verdana
+        ),
+        Arial,
+        sans-serif;
+    font-size: var(
+        --podium-font-size,
+        26px
+    );
+    font-weight: var(
+        --podium-font-weight,
+        700
+    );
+}
+
+
+.podium-position {
+    width: 52px;
+    color: var(
+        --podium-wins-color,
+        #ffe66d
+    );
+    font-weight: var(
+        --podium-font-weight,
+        700
+    );
+    text-align: center;
+}
+
+
+.podium-name {
+    flex: 1;
+    overflow: hidden;
+    color: var(
+        --podium-text-color,
+        #ffffff
+    );
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+.podium-wins {
+    color: var(
+        --podium-wins-color,
+        #ffe66d
+    );
+    font-weight: var(
+        --podium-font-weight,
+        700
+    );
+}

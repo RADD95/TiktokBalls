@@ -1,17 +1,14 @@
 <!doctype html>
 <html lang="es">
+
 <head>
     <meta charset="utf-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
 
     <title>TikTok Balls · Control</title>
 
-    <link
-        rel="stylesheet"
-        href="/test/index.css">
+    <link rel="stylesheet" href="/test/index.css">
 </head>
 
 <body>
@@ -30,16 +27,11 @@
             </div>
         </div>
 
-        <div
-            id="connection-status"
-            class="connection-pill">
+        <div id="connection-status" class="connection-pill">
             Desconectado
         </div>
 
-        <button
-            id="connect-tiktok"
-            class="primary"
-            type="button">
+        <button id="connect-tiktok" class="primary" type="button">
             Conectar TikTok
         </button>
     </header>
@@ -59,31 +51,39 @@
                         </p>
                     </div>
 
-                    <button
-                        id="open-overlay"
-                        class="secondary"
-                        type="button">
+                    <button id="open-overlay" class="secondary" type="button">
                         Abrir overlay
                     </button>
                 </div>
 
                 <div class="preview-container">
-                    <iframe
-                        id="overlay-frame"
-                        class="preview-frame"
-                        title="TikTok Balls Overlay">
+                    <iframe id="overlay-frame" class="preview-frame" title="TikTok Balls Overlay">
                     </iframe>
 
                     <div class="preview-footer">
-                        <span>
-                            URL para TikTok LIVE Studio
-                        </span>
+                        <div class="overlay-link-row">
+                            <span>
+                                Overlay principal
+                            </span>
 
-                        <input
-                            id="overlay-url"
-                            class="overlay-url"
-                            type="text"
-                            readonly>
+                            <input id="overlay-url" class="overlay-url" type="text" readonly>
+                        </div>
+
+                        <div class="overlay-link-row">
+                            <span>
+                                Ranking
+                            </span>
+
+                            <input id="ranking-url" class="overlay-url" type="text" readonly>
+                        </div>
+
+                        <div class="overlay-link-row">
+                            <span>
+                                Podio
+                            </span>
+
+                            <input id="podium-url" class="overlay-url" type="text" readonly>
+                        </div>
                     </div>
                 </div>
 
@@ -93,9 +93,7 @@
                             Estado
                         </span>
 
-                        <span
-                            id="stat-status"
-                            class="stat-value">
+                        <span id="stat-status" class="stat-value">
                             Offline
                         </span>
                     </div>
@@ -105,9 +103,7 @@
                             Jugadores
                         </span>
 
-                        <span
-                            id="stat-players"
-                            class="stat-value">
+                        <span id="stat-players" class="stat-value">
                             0
                         </span>
                     </div>
@@ -117,9 +113,7 @@
                             Eventos
                         </span>
 
-                        <span
-                            id="stat-events"
-                            class="stat-value">
+                        <span id="stat-events" class="stat-value">
                             0
                         </span>
                     </div>
@@ -140,9 +134,7 @@
                 </div>
 
                 <div class="settings-scroll">
-                    <form
-                        id="settings-form"
-                        class="settings-form">
+                    <form id="settings-form" class="settings-form">
 
                         <section class="section">
                             <h3 class="section-heading">
@@ -158,11 +150,35 @@
                                     Usuario de TikTok
                                 </label>
 
-                                <input
-                                    name="tiktokUsername"
-                                    type="text"
-                                    placeholder="usuario_sin_@"
-                                    autocomplete="off">
+                                <input name="tiktokUsername" type="text" placeholder="usuario_sin_@" autocomplete="off">
+                            </div>
+                        </section>
+
+                        <section class="section">
+                            <h3 class="section-heading">
+                                <span class="section-number">
+                                    2
+                                </span>
+
+                                Tamaño de la arena
+                            </h3>
+
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Ancho de la arena
+                                    </label>
+
+                                    <input name="width" type="number" min="320" max="1920" step="1" value="800">
+                                </div>
+
+                                <div class="field">
+                                    <label>
+                                        Alto de la arena
+                                    </label>
+
+                                    <input name="height" type="number" min="240" max="1920" step="1" value="600">
+                                </div>
                             </div>
                         </section>
 
@@ -181,11 +197,7 @@
                                         Comentario
                                     </label>
 
-                                    <input
-                                        name="commentPoints"
-                                        type="number"
-                                        min="0"
-                                        step="1">
+                                    <input name="commentPoints" type="number" min="0" step="1">
                                 </div>
 
                                 <div class="field">
@@ -193,11 +205,7 @@
                                         Multiplicador
                                     </label>
 
-                                    <input
-                                        name="commentMultiplier"
-                                        type="number"
-                                        min="0"
-                                        step="0.1">
+                                    <input name="commentMultiplier" type="number" min="0" step="0.1">
                                 </div>
                             </div>
 
@@ -207,11 +215,7 @@
                                         Like
                                     </label>
 
-                                    <input
-                                        name="likePoints"
-                                        type="number"
-                                        min="0"
-                                        step="0.1">
+                                    <input name="likePoints" type="number" min="0" step="0.1">
                                 </div>
 
                                 <div class="field">
@@ -219,11 +223,7 @@
                                         Multiplicador
                                     </label>
 
-                                    <input
-                                        name="likeMultiplier"
-                                        type="number"
-                                        min="0"
-                                        step="0.1">
+                                    <input name="likeMultiplier" type="number" min="0" step="0.1">
                                 </div>
                             </div>
 
@@ -233,11 +233,7 @@
                                         Follow
                                     </label>
 
-                                    <input
-                                        name="followPoints"
-                                        type="number"
-                                        min="0"
-                                        step="1">
+                                    <input name="followPoints" type="number" min="0" step="1">
                                 </div>
 
                                 <div class="field">
@@ -245,11 +241,7 @@
                                         Multiplicador
                                     </label>
 
-                                    <input
-                                        name="followMultiplier"
-                                        type="number"
-                                        min="0"
-                                        step="0.1">
+                                    <input name="followMultiplier" type="number" min="0" step="0.1">
                                 </div>
                             </div>
 
@@ -259,11 +251,7 @@
                                         Share
                                     </label>
 
-                                    <input
-                                        name="sharePoints"
-                                        type="number"
-                                        min="0"
-                                        step="1">
+                                    <input name="sharePoints" type="number" min="0" step="1">
                                 </div>
 
                                 <div class="field">
@@ -271,11 +259,7 @@
                                         Multiplicador
                                     </label>
 
-                                    <input
-                                        name="shareMultiplier"
-                                        type="number"
-                                        min="0"
-                                        step="0.1">
+                                    <input name="shareMultiplier" type="number" min="0" step="0.1">
                                 </div>
                             </div>
 
@@ -285,11 +269,7 @@
                                         Gift por unidad
                                     </label>
 
-                                    <input
-                                        name="giftPoints"
-                                        type="number"
-                                        min="0"
-                                        step="1">
+                                    <input name="giftPoints" type="number" min="0" step="1">
                                 </div>
 
                                 <div class="field">
@@ -297,11 +277,7 @@
                                         Multiplicador
                                     </label>
 
-                                    <input
-                                        name="giftMultiplier"
-                                        type="number"
-                                        min="0"
-                                        step="0.1">
+                                    <input name="giftMultiplier" type="number" min="0" step="0.1">
                                 </div>
                             </div>
 
@@ -310,11 +286,7 @@
                                     Límite de puntos por minuto
                                 </label>
 
-                                <input
-                                    name="maxPointsPerMinute"
-                                    type="number"
-                                    min="0"
-                                    step="1">
+                                <input name="maxPointsPerMinute" type="number" min="0" step="1">
                             </div>
                         </section>
 
@@ -333,11 +305,7 @@
                                         Tamaño base
                                     </label>
 
-                                    <input
-                                        name="baseRadius"
-                                        type="number"
-                                        min="5"
-                                        step="1">
+                                    <input name="baseRadius" type="number" min="5" step="1">
                                 </div>
 
                                 <div class="field">
@@ -345,11 +313,7 @@
                                         Tamaño máximo
                                     </label>
 
-                                    <input
-                                        name="maxRadius"
-                                        type="number"
-                                        min="0"
-                                        step="1">
+                                    <input name="maxRadius" type="number" min="0" step="1">
                                 </div>
                             </div>
 
@@ -359,11 +323,7 @@
                                         Puntos para crecer
                                     </label>
 
-                                    <input
-                                        name="pointsPerRadius"
-                                        type="number"
-                                        min="0.1"
-                                        step="0.1">
+                                    <input name="pointsPerRadius" type="number" min="0.1" step="0.1">
                                 </div>
 
                                 <div class="field">
@@ -371,11 +331,7 @@
                                         Velocidad
                                     </label>
 
-                                    <input
-                                        name="speed"
-                                        type="number"
-                                        min="0"
-                                        step="0.1">
+                                    <input name="speed" type="number" min="0" step="0.1">
                                 </div>
                             </div>
                         </section>
@@ -394,8 +350,7 @@
                                     Fuente de los nombres
                                 </label>
 
-                                <select
-                                    name="nameFontFamily">
+                                <select name="nameFontFamily">
                                     <option value="Arial">
                                         Arial
                                     </option>
@@ -436,12 +391,7 @@
                                         Tamaño
                                     </label>
 
-                                    <input
-                                        name="nameFontSize"
-                                        type="number"
-                                        min="8"
-                                        max="72"
-                                        step="1">
+                                    <input name="nameFontSize" type="number" min="8" max="72" step="1">
                                 </div>
 
                                 <div class="field">
@@ -449,8 +399,7 @@
                                         Peso
                                     </label>
 
-                                    <select
-                                        name="nameFontWeight">
+                                    <select name="nameFontWeight">
                                         <option value="400">
                                             Normal
                                         </option>
@@ -476,15 +425,11 @@
                                         Color
                                     </label>
 
-                                    <input
-                                        name="nameTextColor"
-                                        type="color">
+                                    <input name="nameTextColor" type="color">
                                 </div>
 
                                 <label class="checkbox-field">
-                                    <input
-                                        name="nameTextShadow"
-                                        type="checkbox">
+                                    <input name="nameTextShadow" type="checkbox">
 
                                     Sombra
                                 </label>
@@ -501,9 +446,7 @@
                             </h3>
 
                             <label class="checkbox-field">
-                                <input
-                                    name="showChat"
-                                    type="checkbox">
+                                <input name="showChat" type="checkbox">
 
                                 Mostrar mensajes
                             </label>
@@ -513,8 +456,7 @@
                                     Fuente del chat
                                 </label>
 
-                                <select
-                                    name="chatFontFamily">
+                                <select name="chatFontFamily">
                                     <option value="Arial">
                                         Arial
                                     </option>
@@ -555,12 +497,7 @@
                                         Tamaño
                                     </label>
 
-                                    <input
-                                        name="chatFontSize"
-                                        type="number"
-                                        min="8"
-                                        max="72"
-                                        step="1">
+                                    <input name="chatFontSize" type="number" min="8" max="72" step="1">
                                 </div>
 
                                 <div class="field">
@@ -568,8 +505,7 @@
                                         Peso
                                     </label>
 
-                                    <select
-                                        name="chatFontWeight">
+                                    <select name="chatFontWeight">
                                         <option value="400">
                                             Normal
                                         </option>
@@ -595,81 +531,304 @@
                                         Color
                                     </label>
 
-                                    <input
-                                        name="chatTextColor"
-                                        type="color">
+                                    <input name="chatTextColor" type="color">
                                 </div>
 
                                 <label class="checkbox-field">
-                                    <input
-                                        name="chatTextShadow"
-                                        type="checkbox">
+                                    <input name="chatTextShadow" type="checkbox">
 
                                     Sombra
                                 </label>
                             </div>
                         </section>
 
+
+<section class="section">
+    <h3 class="section-heading">
+        <span class="section-number">
+            6
+        </span>
+
+        Ranking y podio
+    </h3>
+
+    <h4 class="subsection-heading">
+        Ranking
+    </h4>
+
+    <div class="field">
+        <label>
+            Jugadores visibles
+        </label>
+
+        <input
+            name="rankingLimit"
+            type="number"
+            min="1"
+            max="100"
+            step="1">
+    </div>
+
+    <div class="field">
+        <label>
+            Fuente
+        </label>
+
+        <select name="rankingFontFamily">
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Trebuchet MS">
+                Trebuchet MS
+            </option>
+            <option value="Georgia">Georgia</option>
+            <option value="Courier New">
+                Courier New
+            </option>
+            <option value="Impact">Impact</option>
+            <option value="Segoe UI">Segoe UI</option>
+        </select>
+    </div>
+
+    <div class="field-grid">
+        <div class="field">
+            <label>
+                Tamaño del texto
+            </label>
+
+            <input
+                name="rankingFontSize"
+                type="number"
+                min="8"
+                max="120"
+                step="1">
+        </div>
+
+        <div class="field">
+            <label>
+                Peso
+            </label>
+
+            <select name="rankingFontWeight">
+                <option value="400">Normal</option>
+                <option value="500">Medium</option>
+                <option value="600">Semi-bold</option>
+                <option value="700">Bold</option>
+                <option value="800">Extra-bold</option>
+                <option value="900">Black</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="field-grid">
+        <div class="field">
+            <label>
+                Color del texto
+            </label>
+
+            <input
+                name="rankingTextColor"
+                type="color">
+        </div>
+
+        <div class="field">
+            <label>
+                Color de puntos
+            </label>
+
+            <input
+                name="rankingPointsColor"
+                type="color">
+        </div>
+    </div>
+
+    <div class="field-grid">
+        <div class="field">
+            <label>
+                Tamaño del título
+            </label>
+
+            <input
+                name="rankingTitleSize"
+                type="number"
+                min="8"
+                max="120"
+                step="1">
+        </div>
+
+        <div class="field">
+            <label>
+                Color del título
+            </label>
+
+            <input
+                name="rankingTitleColor"
+                type="color">
+        </div>
+    </div>
+
+    <h4 class="subsection-heading">
+        Podio
+    </h4>
+
+    <div class="field">
+        <label>
+            Puestos visibles
+        </label>
+
+        <input
+            name="podiumLimit"
+            type="number"
+            min="1"
+            max="100"
+            step="1">
+    </div>
+
+    <div class="field">
+        <label>
+            Fuente
+        </label>
+
+        <select name="podiumFontFamily">
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Trebuchet MS">
+                Trebuchet MS
+            </option>
+            <option value="Georgia">Georgia</option>
+            <option value="Courier New">
+                Courier New
+            </option>
+            <option value="Impact">Impact</option>
+            <option value="Segoe UI">Segoe UI</option>
+        </select>
+    </div>
+
+    <div class="field-grid">
+        <div class="field">
+            <label>
+                Tamaño del texto
+            </label>
+
+            <input
+                name="podiumFontSize"
+                type="number"
+                min="8"
+                max="120"
+                step="1">
+        </div>
+
+        <div class="field">
+            <label>
+                Peso
+            </label>
+
+            <select name="podiumFontWeight">
+                <option value="400">Normal</option>
+                <option value="500">Medium</option>
+                <option value="600">Semi-bold</option>
+                <option value="700">Bold</option>
+                <option value="800">Extra-bold</option>
+                <option value="900">Black</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="field-grid">
+        <div class="field">
+            <label>
+                Color del texto
+            </label>
+
+            <input
+                name="podiumTextColor"
+                type="color">
+        </div>
+
+        <div class="field">
+            <label>
+                Color de victorias
+            </label>
+
+            <input
+                name="podiumWinsColor"
+                type="color">
+        </div>
+    </div>
+
+    <div class="field-grid">
+        <div class="field">
+            <label>
+                Tamaño del título
+            </label>
+
+            <input
+                name="podiumTitleSize"
+                type="number"
+                min="8"
+                max="120"
+                step="1">
+        </div>
+
+        <div class="field">
+            <label>
+                Color del título
+            </label>
+
+            <input
+                name="podiumTitleColor"
+                type="color">
+        </div>
+    </div>
+</section>
+
+
                         <section class="section">
                             <h3 class="section-heading">
                                 <span class="section-number">
-                                    6
+                                    7
                                 </span>
 
                                 Visualización
                             </h3>
 
                             <label class="checkbox-field">
-                                <input
-                                    name="showNames"
-                                    type="checkbox">
+                                <input name="showNames" type="checkbox">
 
                                 Mostrar nombres
                             </label>
 
                             <label class="checkbox-field">
-                                <input
-                                    name="showPoints"
-                                    type="checkbox">
+                                <input name="showPoints" type="checkbox">
 
                                 Mostrar puntos
                             </label>
 
                             <label class="checkbox-field">
-                                <input
-                                    name="showLeaderboard"
-                                    type="checkbox">
+                                <input name="showLeaderboard" type="checkbox">
 
                                 Mostrar ranking
                             </label>
 
                             <label class="checkbox-field">
-                                <input
-                                    name="showPodium"
-                                    type="checkbox">
+                                <input name="showPodium" type="checkbox">
 
                                 Mostrar podio histórico
                             </label>
                         </section>
 
                         <div class="settings-actions">
-                            <button
-                                class="primary"
-                                type="submit">
+                            <button class="primary" type="submit">
                                 Guardar settings
                             </button>
 
-                            <button
-                                id="reset-game"
-                                class="danger"
-                                type="button">
+                            <button id="reset-game" class="danger" type="button">
                                 Reiniciar partida
                             </button>
                         </div>
 
-                        <p
-                            id="settings-message"
-                            class="message">
+                        <p id="settings-message" class="message">
                         </p>
                     </form>
                 </div>
@@ -681,4 +840,5 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="./script.js"></script>
 </body>
+
 </html>

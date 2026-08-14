@@ -300,7 +300,7 @@ function normalizeSettings(input) {
                 source.width,
                 800,
                 320,
-                1600
+                1920
             ),
 
         height:
@@ -308,7 +308,7 @@ function normalizeSettings(input) {
                 source.height,
                 600,
                 240,
-                1200
+                1920
             ),
 
         commentPoints:
@@ -529,6 +529,130 @@ maxRadius:
             booleanValue(
                 source.nameTextShadow,
                 true
+            ),
+
+
+        rankingLimit:
+            numberValue(
+                source.rankingLimit,
+                10,
+                1,
+                100
+            ),
+
+
+        rankingFontFamily:
+            fontValue(
+                source.rankingFontFamily,
+                'Verdana'
+            ),
+
+
+        rankingFontSize:
+            numberValue(
+                source.rankingFontSize,
+                26,
+                8,
+                120
+            ),
+
+
+        rankingFontWeight:
+            weightValue(
+                source.rankingFontWeight,
+                '700'
+            ),
+
+
+        rankingTextColor:
+            colorValue(
+                source.rankingTextColor,
+                '#ffffff'
+            ),
+
+
+        rankingTitleColor:
+            colorValue(
+                source.rankingTitleColor,
+                '#5ee7ff'
+            ),
+
+
+        rankingPointsColor:
+            colorValue(
+                source.rankingPointsColor,
+                '#ffe66d'
+            ),
+
+
+        rankingTitleSize:
+            numberValue(
+                source.rankingTitleSize,
+                32,
+                8,
+                120
+            ),
+
+
+        podiumLimit:
+            numberValue(
+                source.podiumLimit,
+                10,
+                1,
+                100
+            ),
+
+
+        podiumFontFamily:
+            fontValue(
+                source.podiumFontFamily,
+                'Verdana'
+            ),
+
+
+        podiumFontSize:
+            numberValue(
+                source.podiumFontSize,
+                26,
+                8,
+                120
+            ),
+
+
+        podiumFontWeight:
+            weightValue(
+                source.podiumFontWeight,
+                '700'
+            ),
+
+
+        podiumTextColor:
+            colorValue(
+                source.podiumTextColor,
+                '#ffffff'
+            ),
+
+
+        podiumTitleColor:
+            colorValue(
+                source.podiumTitleColor,
+                '#ffe66d'
+            ),
+
+
+        podiumWinsColor:
+            colorValue(
+                source.podiumWinsColor,
+                '#ffe66d'
+            ),
+
+
+        podiumTitleSize:
+            numberValue(
+                source.podiumTitleSize,
+                32,
+                8,
+                120
             )
     };
 }

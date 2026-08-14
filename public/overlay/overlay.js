@@ -25,8 +25,8 @@ const context =
         }
     );
 
-const canvasWidth = 800;
-const canvasHeight = 600;
+let canvasWidth = 800;
+let canvasHeight = 600;
 
 const balls =
     new Map();
@@ -51,7 +51,25 @@ const defaultSettings = {
     chatFontSize: 16,
     chatFontWeight: '400',
     chatTextColor: '#ffffff',
-    chatTextShadow: true
+    chatTextShadow: true,
+
+    rankingLimit: 5,
+    rankingFontFamily: 'Arial',
+    rankingFontSize: 14,
+    rankingFontWeight: '700',
+    rankingTextColor: '#ffffff',
+    rankingTitleColor: '#5ee7ff',
+    rankingPointsColor: '#ffe66d',
+    rankingTitleSize: 14,
+
+    podiumLimit: 5,
+    podiumFontFamily: 'Arial',
+    podiumFontSize: 14,
+    podiumFontWeight: '700',
+    podiumTextColor: '#ffffff',
+    podiumTitleColor: '#ffe66d',
+    podiumWinsColor: '#ffe66d',
+    podiumTitleSize: 14
 };
 
 let settings = {
@@ -61,6 +79,8 @@ let settings = {
 let gameState = null;
 let lastFrameTime =
     performance.now();
+
+let pendingCanvasResize = null;
 
 const podium =
     document.createElement(
@@ -112,7 +132,43 @@ const winnerWins =
         '.winner-wins'
     );
 
-function resizeCanvas() {
+function resizeCanvas(
+    width = canvasWidth,
+    height = canvasHeight
+) {
+    const nextWidth =
+        Math.max(
+            320,
+            Math.min(
+                1920,
+                Number(width) || 800
+            )
+        );
+
+    const nextHeight =
+        Math.max(
+            240,
+            Math.min(
+                1920,
+                Number(height) || 600
+            )
+        );
+
+    if (
+        nextWidth === canvasWidth &&
+        nextHeight === canvasHeight &&
+        canvas.width === nextWidth &&
+        canvas.height === nextHeight
+    ) {
+        return;
+    }
+
+    canvasWidth =
+        nextWidth;
+
+    canvasHeight =
+        nextHeight;
+
     canvas.width =
         canvasWidth;
 
@@ -123,6 +179,12 @@ function resizeCanvas() {
         `${canvasWidth}px`;
 
     canvas.style.height =
+        `${canvasHeight}px`;
+
+    arena.style.width =
+        `${canvasWidth}px`;
+
+    arena.style.height =
         `${canvasHeight}px`;
 
     context.setTransform(
@@ -136,6 +198,52 @@ function resizeCanvas() {
 
     context.imageSmoothingEnabled =
         true;
+
+    normalizeAllBalls();
+    drawFrame();
+}
+
+function normalizeAllBalls() {
+    for (
+        const ball of balls.values()
+    ) {
+        const player =
+            ball.player;
+
+        const currentX =
+            Number(
+                player.x
+            );
+
+        const currentY =
+            Number(
+                player.y
+            );
+
+        if (
+            Number.isFinite(currentX)
+        ) {
+            ball.displayX =
+                currentX > 1
+                    ? currentX / canvasWidth
+                    : currentX;
+
+            ball.targetX =
+                ball.displayX;
+        }
+
+        if (
+            Number.isFinite(currentY)
+        ) {
+            ball.displayY =
+                currentY > 1
+                    ? currentY / canvasHeight
+                    : currentY;
+
+            ball.targetY =
+                ball.displayY;
+        }
+    }
 }
 
 function getDisplayName(player) {
@@ -187,7 +295,10 @@ function getAvatar(url) {
     return image;
 }
 
-function normalizePosition(value) {
+function normalizePosition(
+    value,
+    dimension
+) {
     const parsed =
         Number(value);
 
@@ -198,7 +309,7 @@ function normalizePosition(value) {
     }
 
     if (parsed > 1) {
-        return parsed / canvasWidth;
+        return parsed / dimension;
     }
 
     return parsed;
@@ -210,12 +321,14 @@ function normalizePlayer(player) {
 
         x:
             normalizePosition(
-                player.x
+                player.x,
+                canvasWidth
             ),
 
         y:
             normalizePosition(
-                player.y
+                player.y,
+                canvasHeight
             ),
 
         radius:
@@ -322,10 +435,31 @@ function renderState(state) {
         return;
     }
 
-    settings = {
+    const nextSettings = {
         ...defaultSettings,
         ...(state.settings || {})
     };
+
+    const nextWidth =
+        Number(nextSettings.width);
+
+    const nextHeight =
+        Number(nextSettings.height);
+
+    if (
+        Number.isFinite(nextWidth) &&
+        Number.isFinite(nextHeight) &&
+        nextWidth > 0 &&
+        nextHeight > 0
+    ) {
+        resizeCanvas(
+            nextWidth,
+            nextHeight
+        );
+    }
+
+    settings =
+        nextSettings;
 
     gameState =
         state.game || state;
@@ -472,6 +606,50 @@ function renderLeaderboard(players) {
         'hidden'
     );
 
+leaderboard.style.setProperty(
+    '--ranking-font-family',
+    settings.rankingFontFamily ||
+    'Arial'
+);
+
+leaderboard.style.setProperty(
+    '--ranking-font-size',
+    `${Number(
+        settings.rankingFontSize
+    ) || 14}px`
+);
+
+leaderboard.style.setProperty(
+    '--ranking-font-weight',
+    settings.rankingFontWeight ||
+    '700'
+);
+
+leaderboard.style.setProperty(
+    '--ranking-text-color',
+    settings.rankingTextColor ||
+    '#ffffff'
+);
+
+leaderboard.style.setProperty(
+    '--ranking-title-color',
+    settings.rankingTitleColor ||
+    '#5ee7ff'
+);
+
+leaderboard.style.setProperty(
+    '--ranking-points-color',
+    settings.rankingPointsColor ||
+    '#ffe66d'
+);
+
+leaderboard.style.setProperty(
+    '--ranking-title-size',
+    `${Number(
+        settings.rankingTitleSize
+    ) || 14}px`
+);
+
     const title =
         document.createElement(
             'strong'
@@ -480,9 +658,21 @@ function renderLeaderboard(players) {
     title.textContent =
         'Ranking';
 
+
+
     leaderboard.appendChild(
         title
     );
+
+    const limit =
+        Math.max(
+            1,
+            Math.floor(
+                Number(
+                    settings.rankingLimit
+                ) || 5
+            )
+        );
 
     const sortedPlayers =
         [...players]
@@ -495,7 +685,10 @@ function renderLeaderboard(players) {
                         first.points || 0
                     )
             )
-            .slice(0, 5);
+            .slice(
+                0,
+                limit
+            );
 
     sortedPlayers.forEach(
         (player, index) => {
@@ -516,6 +709,10 @@ function renderLeaderboard(players) {
                 `${index + 1}. ` +
                 getDisplayName(player);
 
+            name.style.color =
+                settings.rankingTextColor ||
+                '#ffffff';
+
             const points =
                 document.createElement(
                     'span'
@@ -527,6 +724,10 @@ function renderLeaderboard(players) {
                         player.points || 0
                     )
                 );
+
+            points.style.color =
+                settings.rankingPointsColor ||
+                '#ffe66d';
 
             row.appendChild(
                 name
@@ -561,6 +762,50 @@ function renderPodium(players) {
         'hidden'
     );
 
+podium.style.setProperty(
+    '--podium-font-family',
+    settings.podiumFontFamily ||
+    'Arial'
+);
+
+podium.style.setProperty(
+    '--podium-font-size',
+    `${Number(
+        settings.podiumFontSize
+    ) || 14}px`
+);
+
+podium.style.setProperty(
+    '--podium-font-weight',
+    settings.podiumFontWeight ||
+    '700'
+);
+
+podium.style.setProperty(
+    '--podium-text-color',
+    settings.podiumTextColor ||
+    '#ffffff'
+);
+
+podium.style.setProperty(
+    '--podium-title-color',
+    settings.podiumTitleColor ||
+    '#ffe66d'
+);
+
+podium.style.setProperty(
+    '--podium-wins-color',
+    settings.podiumWinsColor ||
+    '#ffe66d'
+);
+
+podium.style.setProperty(
+    '--podium-title-size',
+    `${Number(
+        settings.podiumTitleSize
+    ) || 14}px`
+);
+
     const title =
         document.createElement(
             'strong'
@@ -568,6 +813,7 @@ function renderPodium(players) {
 
     title.textContent =
         '🏆 Podio histórico';
+
 
     podium.appendChild(
         title
@@ -595,8 +841,21 @@ function renderPodium(players) {
         return;
     }
 
+    const limit =
+        Math.max(
+            1,
+            Math.floor(
+                Number(
+                    settings.podiumLimit
+                ) || 5
+            )
+        );
+
     players
-        .slice(0, 5)
+        .slice(
+            0,
+            limit
+        )
         .forEach(
             (player, index) => {
                 const row =
@@ -615,6 +874,10 @@ function renderPodium(players) {
                 position.textContent =
                     `${index + 1}.`;
 
+                position.style.color =
+                    settings.podiumWinsColor ||
+                    '#ffe66d';
+
                 const name =
                     document.createElement(
                         'span'
@@ -625,6 +888,10 @@ function renderPodium(players) {
                         player
                     );
 
+                name.style.color =
+                    settings.podiumTextColor ||
+                    '#ffffff';
+
                 const wins =
                     document.createElement(
                         'span'
@@ -632,6 +899,10 @@ function renderPodium(players) {
 
                 wins.textContent =
                     `${player.wins || 0} 🏆`;
+
+                wins.style.color =
+                    settings.podiumWinsColor ||
+                    '#ffe66d';
 
                 row.appendChild(
                     position
@@ -1377,6 +1648,26 @@ function animationLoop(currentTime) {
 }
 
 socket.on(
+    'arena:resize',
+    (size) => {
+        pendingCanvasResize = {
+            width:
+                size.width,
+
+            height:
+                size.height
+        };
+
+        resizeCanvas(
+            pendingCanvasResize.width,
+            pendingCanvasResize.height
+        );
+
+        pendingCanvasResize = null;
+    }
+);
+
+socket.on(
     'state:init',
     renderState
 );
@@ -1494,7 +1785,12 @@ resizeCanvas();
 
 window.addEventListener(
     'resize',
-    resizeCanvas
+    () => {
+        resizeCanvas(
+            canvasWidth,
+            canvasHeight
+        );
+    }
 );
 
 requestAnimationFrame(

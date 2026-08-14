@@ -26,6 +26,7 @@ let connection = null;
 let currentUsername = null;
 let isConnecting = false;
 let isConnected = false;
+let automaticDisconnectInProgress = false;
 
 function normalizeUsername(username) {
     return String(username || '')
@@ -443,39 +444,31 @@ connection.on('share', (data) => {
         }
     });
 
-    connection.on('disconnected', () => {
-        isConnected = false;
-        isConnecting = false;
+connection.on('disconnected', async () => {
+    const disconnectedUsername =
+        currentUsername;
 
-        console.log(
-            `[TikTok] Conexión cerrada para @${currentUsername}`
-        );
+    console.log(
+        `[TikTok] Conexión cerrada para @${disconnectedUsername}`
+    );
 
-        if (realtime) {
-            realtime.event({
-                type: 'connection',
-                status: 'disconnected',
-                username: currentUsername
-            });
-        }
-    });
+    await handleAutomaticDisconnect(
+        'connection_closed'
+    );
+});
 
-    connection.on('streamEnd', () => {
-        isConnected = false;
-        isConnecting = false;
+connection.on('streamEnd', async () => {
+    const endedUsername =
+        currentUsername;
 
-        console.log(
-            `[TikTok] El LIVE de @${currentUsername} terminó`
-        );
+    console.log(
+        `[TikTok] El LIVE de @${endedUsername} terminó`
+    );
 
-        if (realtime) {
-            realtime.event({
-                type: 'connection',
-                status: 'streamEnd',
-                username: currentUsername
-            });
-        }
-    });
+    await handleAutomaticDisconnect(
+        'live_ended'
+    );
+});
 
     connection.on('error', (error) => {
         isConnected = false;
@@ -526,6 +519,44 @@ async function disposeConnection() {
     isConnecting = false;
 }
 
+async function handleAutomaticDisconnect(reason) {
+    if (
+        automaticDisconnectInProgress
+    ) {
+        return;
+    }
+
+    automaticDisconnectInProgress = true;
+
+    const disconnectedUsername =
+        currentUsername;
+
+    isConnected = false;
+    isConnecting = false;
+
+    try {
+        await disposeConnection();
+    } catch (error) {
+        console.warn(
+            '[TikTok] Error limpiando conexión terminada:',
+            formatError(error)
+        );
+    }
+
+    currentUsername = null;
+
+    if (realtime) {
+        realtime.event({
+            type: 'connection',
+            status: 'disconnected',
+            username: disconnectedUsername,
+            reason
+        });
+    }
+
+    automaticDisconnectInProgress = false;
+}
+
 async function connect(username) {
     const cleanUsername = normalizeUsername(username);
 
@@ -556,6 +587,7 @@ async function connect(username) {
     }
 
     isConnecting = true;
+    automaticDisconnectInProgress = false;
 
     await disposeConnection();
 
