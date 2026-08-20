@@ -9,7 +9,8 @@ const podium =
 
 
 let podiumSettings = {
-    podiumLimit: 10,
+    podiumLimit:
+        10,
 
     podiumFontFamily:
         'Verdana',
@@ -34,7 +35,9 @@ let podiumSettings = {
 };
 
 
-function getDisplayName(player) {
+function getDisplayName(
+    player
+) {
     return (
         player.nickname ||
         player.username ||
@@ -52,7 +55,9 @@ function getNumber(
         Number(value);
 
 
-    return Number.isFinite(parsed)
+    return Number.isFinite(
+        parsed
+    )
         ? parsed
         : fallback;
 }
@@ -113,7 +118,123 @@ function applyPodiumSettings() {
 }
 
 
-function renderPodium(players) {
+function getModeLabel(
+    mode
+) {
+    return mode === 'battle'
+        ? 'Batalla'
+        : 'Clásico';
+}
+
+
+function createStat(
+    className,
+    text
+) {
+    const stat =
+        document.createElement(
+            'span'
+        );
+
+
+    stat.className =
+        className;
+
+
+    stat.textContent =
+        text;
+
+
+    return stat;
+}
+
+
+function renderClassicStats(
+    player
+) {
+    const stats =
+        document.createElement(
+            'div'
+        );
+
+
+    stats.className =
+        'podium-stats';
+
+
+    stats.appendChild(
+        createStat(
+            'podium-stat',
+            `${player.wins || 0} 🏆`
+        )
+    );
+
+
+    stats.appendChild(
+        createStat(
+            'podium-stat',
+            `${player.ballsEaten || 0} 🍽️`
+        )
+    );
+
+
+    stats.appendChild(
+        createStat(
+            'podium-stat',
+            `${player.pointsEarned || 0} pts`
+        )
+    );
+
+
+    return stats;
+}
+
+
+function renderBattleStats(
+    player
+) {
+    const stats =
+        document.createElement(
+            'div'
+        );
+
+
+    stats.className =
+        'podium-stats';
+
+
+    stats.appendChild(
+        createStat(
+            'podium-stat',
+            `${player.wins || 0} 🏆`
+        )
+    );
+
+
+    stats.appendChild(
+        createStat(
+            'podium-stat',
+            `${player.damageDealt || 0} daño`
+        )
+    );
+
+
+    stats.appendChild(
+        createStat(
+            'podium-stat',
+            `${player.hitsGiven || 0} golpes`
+        )
+    );
+
+
+    return stats;
+}
+
+
+function renderPodium(
+    players,
+    mode
+) {
     podium.innerHTML =
         '';
 
@@ -142,7 +263,8 @@ function renderPodium(players) {
 
 
     title.textContent =
-        '🏆 Podio histórico';
+        `🏆 Podio histórico - ` +
+        `${getModeLabel(mode)}`;
 
 
     panel.appendChild(
@@ -168,7 +290,10 @@ function renderPodium(players) {
             limit
         )
         .forEach(
-            (player, index) => {
+            (
+                player,
+                index
+            ) => {
                 const row =
                     document.createElement(
                         'div'
@@ -209,18 +334,14 @@ function renderPodium(players) {
                     );
 
 
-                const wins =
-                    document.createElement(
-                        'span'
-                    );
-
-
-                wins.className =
-                    'podium-wins';
-
-
-                wins.textContent =
-                    `${player.wins || 0} 🏆`;
+                const stats =
+                    mode === 'battle'
+                        ? renderBattleStats(
+                            player
+                        )
+                        : renderClassicStats(
+                            player
+                        );
 
 
                 row.appendChild(
@@ -234,7 +355,7 @@ function renderPodium(players) {
 
 
                 row.appendChild(
-                    wins
+                    stats
                 );
 
 
@@ -251,8 +372,12 @@ function renderPodium(players) {
 }
 
 
-function handleState(state) {
-    if (!state) {
+function handleState(
+    state
+) {
+    if (
+        !state
+    ) {
         return;
     }
 
@@ -267,8 +392,16 @@ function handleState(state) {
         state.game || {};
 
 
+    const mode =
+        game.podiumMode ===
+        'battle'
+            ? 'battle'
+            : 'classic';
+
+
     renderPodium(
-        game.podium || []
+        game.podium || [],
+        mode
     );
 }
 

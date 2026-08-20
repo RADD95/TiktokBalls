@@ -1,31 +1,62 @@
-const crypto = require('crypto');
+const crypto =
+    require('crypto');
+
 
 const {
     get
-} = require('./settings');
+} =
+    require('./settings');
+
 
 const {
     key
-} = require('./points');
+} =
+    require('./points');
+
+
+const podium =
+    require('./podium');
+
+
+const classicMode =
+    require('./game/classic-mode');
+
+
+const battleMode =
+    require('./game/battle-mode');
+
 
 const players =
     new Map();
 
+
 const eliminatedPlayers =
     new Set();
 
-const wins =
-    new Map();
 
 const roundParticipants =
     new Set();
 
-const DEFAULT_WIDTH = 800;
-const DEFAULT_HEIGHT = 600;
 
-let roundNumber = 1;
-let roundStatus = 'playing';
-let currentWinner = null;
+const DEFAULT_WIDTH =
+    800;
+
+
+const DEFAULT_HEIGHT =
+    600;
+
+
+let roundNumber =
+    1;
+
+
+let roundStatus =
+    'playing';
+
+
+let currentWinner =
+    null;
+
 
 const colors = [
     '#00ffff',
@@ -46,86 +77,128 @@ const colors = [
     '#9400d3'
 ];
 
-function number(value, fallback = 0) {
+
+function number(
+    value,
+    fallback = 0
+) {
     const parsed =
         Number(value);
+
 
     return Number.isFinite(parsed)
         ? parsed
         : fallback;
 }
 
-function clamp(value, minimum, maximum) {
+
+function clamp(
+    value,
+    minimum,
+    maximum
+) {
     return Math.max(
         minimum,
-        Math.min(maximum, value)
+        Math.min(
+            maximum,
+            value
+        )
     );
 }
+
 
 function getArenaSize() {
     const settings =
         get();
 
-    return {
-        width: Math.max(
-            320,
-            Math.min(
-                1920,
-                Number(
-                    settings.width
-                ) || DEFAULT_WIDTH
-            )
-        ),
 
-        height: Math.max(
-            240,
-            Math.min(
-                1920,
-                Number(
-                    settings.height
-                ) || DEFAULT_HEIGHT
+    return {
+        width:
+            Math.max(
+                320,
+                Math.min(
+                    1920,
+                    Number(
+                        settings.width
+                    ) || DEFAULT_WIDTH
+                )
+            ),
+
+        height:
+            Math.max(
+                240,
+                Math.min(
+                    1920,
+                    Number(
+                        settings.height
+                    ) || DEFAULT_HEIGHT
+                )
             )
-        )
     };
 }
+
 
 function getColor(id) {
     const hash =
         crypto
             .createHash('md5')
-            .update(String(id))
+            .update(
+                String(id)
+            )
             .digest()[0];
+
 
     return colors[
         hash % colors.length
     ];
 }
 
-function calculateRadius(points, settings) {
+
+function calculateRadius(
+    points,
+    settings
+) {
     const baseRadius =
-        Number(settings.baseRadius) || 24;
+        Number(
+            settings.baseRadius
+        ) || 24;
+
 
     const pointsPerRadius =
-        Number(settings.pointsPerRadius) || 4;
+        Number(
+            settings.pointsPerRadius
+        ) || 4;
+
 
     const maxRadius =
-        Number(settings.maxRadius);
+        Number(
+            settings.maxRadius
+        );
+
 
     const growth =
         Math.sqrt(
-            Math.max(0, points) /
+            Math.max(
+                0,
+                points
+            ) /
             pointsPerRadius
         ) * 12;
+
 
     const calculatedRadius =
         baseRadius + growth;
 
+
     if (
-        !Number.isFinite(maxRadius) ||
+        !Number.isFinite(
+            maxRadius
+        ) ||
         maxRadius <= 0
     ) {
         return calculatedRadius;
     }
+
 
     return Math.min(
         calculatedRadius,
@@ -133,9 +206,13 @@ function calculateRadius(points, settings) {
     );
 }
 
-function getMessageFromEvent(event) {
+
+function getMessageFromEvent(
+    event
+) {
     if (
-        event.type === 'comment'
+        event.type ===
+        'comment'
     ) {
         return (
             event.message ||
@@ -144,13 +221,16 @@ function getMessageFromEvent(event) {
         );
     }
 
+
     if (
-        event.type === 'gift'
+        event.type ===
+        'gift'
     ) {
         const giftName =
             event.giftName ||
             event.giftname ||
             'Gift';
+
 
         const repeatCount =
             number(
@@ -159,16 +239,21 @@ function getMessageFromEvent(event) {
                 1
             );
 
+
         return (
             `🎁 ${giftName} ` +
             `x${repeatCount}`
         );
     }
 
+
     return '';
 }
 
-function getDisplayName(player) {
+
+function getDisplayName(
+    player
+) {
     return (
         player.nickname ||
         player.username ||
@@ -177,18 +262,29 @@ function getDisplayName(player) {
     );
 }
 
-function getPlayerId(event) {
+
+function getPlayerId(
+    event
+) {
     return String(
         key(event)
     );
 }
 
-function createPlayer(event, settings) {
+
+function createPlayer(
+    event,
+    settings
+) {
     const playerId =
-        getPlayerId(event);
+        getPlayerId(
+            event
+        );
+
 
     return {
-        id: playerId,
+        id:
+            playerId,
 
         userId:
             String(
@@ -220,7 +316,8 @@ function createPlayer(event, settings) {
             event.avatar ||
             '',
 
-        points: 0,
+        points:
+            0,
 
         radius:
             number(
@@ -229,17 +326,19 @@ function createPlayer(event, settings) {
             ),
 
         color:
-            getColor(playerId),
+            getColor(
+                playerId
+            ),
 
-x:
-    0.12 +
-    Math.random() *
-    0.76,
+        x:
+            0.12 +
+            Math.random() *
+            0.76,
 
-y:
-    0.12 +
-    Math.random() *
-    0.76,
+        y:
+            0.12 +
+            Math.random() *
+            0.76,
 
         vx:
             (
@@ -265,56 +364,103 @@ y:
                 0.12
             ),
 
-        message: '',
-        messageUpdatedAt: 0,
-        lastEventType: null,
-        lastGiftName: '',
-        lastEventAt: Date.now()
+        message:
+            '',
+
+        messageUpdatedAt:
+            0,
+
+        lastEventType:
+            null,
+
+        lastGiftName:
+            '',
+
+        lastEventAt:
+            Date.now()
     };
 }
 
 
-
-function add(event, earnedPoints) {
+function add(
+    event,
+    earnedPoints
+) {
     if (
-        roundStatus !== 'playing'
+        roundStatus !==
+        'playing'
     ) {
         return null;
     }
 
+
     const settings =
         get();
 
-    const playerId =
-        getPlayerId(event);
 
-    if (
-        eliminatedPlayers.has(playerId)
-    ) {
-        eliminatedPlayers.delete(
+    const playerId =
+        getPlayerId(
+            event
+        );
+
+
+    const wasEliminated =
+        eliminatedPlayers.has(
             playerId
         );
+
+
+    const canRespawn =
+        settings.gameMode ===
+            'classic' ||
+        (
+            settings.gameMode ===
+                'battle' &&
+            settings.battleRespawn ===
+                true
+        );
+
+
+    if (
+        wasEliminated &&
+        !canRespawn
+    ) {
+        return null;
     }
 
-    let player =
-        players.get(playerId);
 
-    if (!player) {
+    let player =
+        players.get(
+            playerId
+        );
+
+
+    if (
+        !player
+    ) {
         player =
             createPlayer(
                 event,
                 settings
             );
 
+
         players.set(
             playerId,
             player
         );
 
+
         roundParticipants.add(
             playerId
         );
+
+
+        eliminatedPlayers.delete(
+            playerId
+        );
     }
+
 
     player.points +=
         number(
@@ -322,49 +468,71 @@ function add(event, earnedPoints) {
             0
         );
 
+
     player.username =
         event.username ||
         event.uniqueId ||
         player.username;
+
 
     player.nickname =
         event.nickname ||
         player.nickname ||
         player.username;
 
+
     player.uniqueId =
         event.uniqueId ||
         player.uniqueId;
 
-    if (event.userId) {
+
+    if (
+        event.userId
+    ) {
         player.userId =
-            String(event.userId);
+            String(
+                event.userId
+            );
     }
 
-    if (event.avatar) {
+
+    if (
+        event.avatar
+    ) {
         player.avatar =
             event.avatar;
     }
 
-    const message =
-        getMessageFromEvent(event);
 
-    if (message) {
+    const message =
+        getMessageFromEvent(
+            event
+        );
+
+
+    if (
+        message
+    ) {
         player.message =
             message;
+
 
         player.messageUpdatedAt =
             Date.now();
     }
 
+
     player.lastEventType =
         event.type;
+
 
     player.lastEventAt =
         Date.now();
 
+
     if (
-        event.type === 'gift'
+        event.type ===
+        'gift'
     ) {
         player.lastGiftName =
             event.giftName ||
@@ -372,105 +540,226 @@ function add(event, earnedPoints) {
             'Gift';
     }
 
-const calculatedRadius =
-    calculateRadius(
-        player.points,
-        settings
-    );
 
-const currentRadius =
-    number(
-        player.radius,
+    const calculatedRadius =
+        calculateRadius(
+            player.points,
+            settings
+        );
+
+
+    const currentRadius =
         number(
-            settings.baseRadius,
-            24
-        )
-    );
+            player.radius,
+            number(
+                settings.baseRadius,
+                24
+            )
+        );
 
-player.radius =
-    Math.max(
-        currentRadius,
-        calculatedRadius
-    );
+
+    player.radius =
+        Math.max(
+            currentRadius,
+            calculatedRadius
+        );
+
+
+    player.status =
+        'active';
+
 
     return player;
 }
+
 
 function list() {
     return [
         ...players.values()
     ]
         .sort(
-            (first, second) =>
+            (
+                first,
+                second
+            ) =>
                 second.points -
                 first.points
         );
 }
 
-function getPodium() {
-    return [
-        ...wins.entries()
-    ]
-        .map(([id, data]) => ({
-            id,
 
-            username:
-                data.username,
+function getCurrentMode() {
+    const settings =
+        get();
 
-            nickname:
-                data.nickname,
 
-            avatar:
-                data.avatar,
-
-            wins:
-                data.wins
-        }))
-        .sort(
-            (first, second) =>
-                second.wins -
-                first.wins
-        )
-        .slice(0, 10);
+    return settings.gameMode ===
+        'battle'
+        ? 'battle'
+        : 'classic';
 }
 
-function registerWinner(player) {
-    const playerId =
-        String(player.id);
 
-    const previous =
-        wins.get(playerId) || {
-            username:
-                player.username,
-
-            nickname:
-                player.nickname,
-
-            avatar:
-                player.avatar || '',
-
-            wins: 0
-        };
-
-    previous.username =
-        player.username;
-
-    previous.nickname =
-        player.nickname;
-
-    previous.avatar =
-        player.avatar ||
-        previous.avatar;
-
-    previous.wins += 1;
-
-    wins.set(
-        playerId,
-        previous
+function getPodium() {
+    return podium.get(
+        getCurrentMode(),
+        10
     );
+}
+
+
+function recordCollisionStats(
+    result
+) {
+    const stats =
+        result?.stats;
+
+
+    if (
+        !stats
+    ) {
+        return;
+    }
+
+
+    const mode =
+        getCurrentMode();
+
+
+    if (
+        result.type ===
+        'eat'
+    ) {
+        const eater =
+            players.get(
+                String(
+                    stats.eaterId
+                )
+            );
+
+
+        const target =
+            players.get(
+                String(
+                    stats.targetId
+                )
+            ) ||
+            result.eaten;
+
+
+        if (
+            eater
+        ) {
+            podium.record(
+                mode,
+                eater,
+                {
+                    ballsEaten:
+                        stats.ballsEaten,
+
+                    pointsEarned:
+                        stats.pointsFromEating,
+
+                    radius:
+                        stats.eaterRadius
+                }
+            );
+        }
+
+
+        if (
+            target
+        ) {
+            podium.record(
+                mode,
+                target,
+                {
+                    timesEaten:
+                        stats.timesEaten
+                }
+            );
+        }
+
+
+        return;
+    }
+
+
+    if (
+        result.type ===
+        'battle-hit'
+    ) {
+        const attacker =
+            players.get(
+                String(
+                    stats.attackerId
+                )
+            );
+
+
+        const target =
+            players.get(
+                String(
+                    stats.targetId
+                )
+            ) ||
+            result.target;
+
+
+        if (
+            attacker
+        ) {
+            podium.record(
+                mode,
+                attacker,
+                {
+                    hitsGiven:
+                        stats.hitsGiven,
+
+                    damageDealt:
+                        stats.damageDealt,
+
+                    radius:
+                        attacker.radius
+                }
+            );
+        }
+
+
+        if (
+            target
+        ) {
+            podium.record(
+                mode,
+                target,
+                {
+                    hitsReceived:
+                        stats.hitsReceived,
+
+                    damageReceived:
+                        stats.damageReceived
+                }
+            );
+        }
+    }
+}
+
+
+function registerWinner(
+    player
+) {
+    const savedPlayer =
+        podium.registerWinner(
+            getCurrentMode(),
+            player
+        );
+
 
     currentWinner = {
-        id: playerId,
+        id:
+            String(
+                player.id
+            ),
 
         userId:
             player.userId,
@@ -479,10 +768,13 @@ function registerWinner(player) {
             player.username,
 
         nickname:
-            getDisplayName(player),
+            getDisplayName(
+                player
+            ),
 
         avatar:
-            player.avatar || '',
+            player.avatar ||
+            '',
 
         points:
             player.points,
@@ -491,18 +783,25 @@ function registerWinner(player) {
             player.radius,
 
         wins:
-            previous.wins
+            savedPlayer.wins
     };
+
 
     roundStatus =
         'finished';
 
+
     return currentWinner;
 }
 
-function distanceBetween(first, second) {
+
+function distanceBetween(
+    first,
+    second
+) {
     const arena =
         getArenaSize();
+
 
     const dx =
         (
@@ -511,6 +810,7 @@ function distanceBetween(first, second) {
         ) *
         arena.width;
 
+
     const dy =
         (
             first.y -
@@ -518,71 +818,45 @@ function distanceBetween(first, second) {
         ) *
         arena.height;
 
+
     return Math.sqrt(
         dx * dx +
         dy * dy
     );
 }
 
-function canEat(eater, target) {
+
+function consume(
+    eaterId,
+    targetId
+) {
     if (
-        !eater ||
-        !target ||
-        eater.id === target.id
-    ) {
-        return false;
-    }
-
-    const eaterRadius =
-        number(
-            eater.radius,
-            24
-        );
-
-    const targetRadius =
-        number(
-            target.radius,
-            24
-        );
-
-    if (
-        eaterRadius <
-        targetRadius * 1.15
-    ) {
-        return false;
-    }
-
-    const collisionDistance =
-        eaterRadius +
-        targetRadius;
-
-    return (
-        distanceBetween(
-            eater,
-            target
-        ) <= collisionDistance
-    );
-}
-
-function consume(eaterId, targetId) {
-    if (
-        roundStatus !== 'playing'
+        roundStatus !==
+        'playing'
     ) {
         return {
             ok: false,
-            reason: 'round_finished'
+            reason:
+                'round_finished'
         };
     }
 
+
     const eater =
         players.get(
-            String(eaterId)
+            String(
+                eaterId
+            )
         );
+
 
     const target =
         players.get(
-            String(targetId)
+            String(
+                targetId
+            )
         );
+
 
     if (
         !eater ||
@@ -590,121 +864,32 @@ function consume(eaterId, targetId) {
     ) {
         return {
             ok: false,
-            reason: 'player_not_found'
+            reason:
+                'player_not_found'
         };
     }
 
-    if (
-        eater.id === target.id
-    ) {
-        return {
-            ok: false,
-            reason: 'same_player'
-        };
-    }
 
-    if (
-        !canEat(eater, target)
-    ) {
-        return {
-            ok: false,
-            reason: 'collision_not_valid'
-        };
-    }
-
-    const eaterRadius =
-        number(
-            eater.radius,
-            24
-        );
-
-    const targetRadius =
-        number(
-            target.radius,
-            24
-        );
-
-    const targetPoints =
-        number(
-            target.points,
-            0
-        );
-
-    eater.radius =
-        Math.sqrt(
-            eaterRadius *
-            eaterRadius +
-            targetRadius *
-            targetRadius
-        );
-
-    eater.points +=
-        targetPoints;
-
-    eater.message =
-        `💥 Comió a ` +
-        getDisplayName(target);
-
-    eater.messageUpdatedAt =
-        Date.now();
-
-    eater.lastEventType =
-        'eat';
-
-    eater.lastEventAt =
-        Date.now();
-
-    players.delete(
-        target.id
-    );
-
-    eliminatedPlayers.add(
-        target.id
-    );
-
-    let winner = null;
-
-    if (
-        players.size === 1 &&
-        roundParticipants.size >= 2
-    ) {
-        winner =
-            registerWinner(
-                eater
-            );
-    }
-
-    return {
-        ok: true,
-
-        eater: {
-            ...eater
-        },
-
-        eaten: {
-            id:
-                target.id,
-
-            username:
-                target.username,
-
-            nickname:
-                target.nickname,
-
-            points:
-                target.points
-        },
-
-        winner,
-
-        state:
-            snapshot()
-    };
+    return classicMode.consume({
+        eater,
+        target,
+        distanceBetween,
+        players,
+        eliminatedPlayers,
+        roundParticipants,
+        registerWinner,
+        snapshot
+    });
 }
 
-function movePlayer(player, deltaSeconds) {
+
+function movePlayer(
+    player,
+    deltaSeconds
+) {
     const settings =
         get();
+
 
     const speed =
         number(
@@ -712,42 +897,57 @@ function movePlayer(player, deltaSeconds) {
             1
         );
 
+
     const radius =
         number(
             player.radius,
             24
         );
 
-const arena =
-    getArenaSize();
 
-const normalizedRadiusX =
-    radius / arena.width;
+    const arena =
+        getArenaSize();
 
-const normalizedRadiusY =
-    radius / arena.height;
+
+    const normalizedRadiusX =
+        radius /
+        arena.width;
+
+
+    const normalizedRadiusY =
+        radius /
+        arena.height;
+
 
     player.x +=
         player.vx *
         deltaSeconds *
         speed;
 
+
     player.y +=
         player.vy *
         deltaSeconds *
         speed;
 
-const minX =
-    normalizedRadiusX;
 
-const maxX =
-    1 - normalizedRadiusX;
+    const minX =
+        normalizedRadiusX;
 
-const minY =
-    normalizedRadiusY;
 
-const maxY =
-    1 - normalizedRadiusY;
+    const maxX =
+        1 -
+        normalizedRadiusX;
+
+
+    const minY =
+        normalizedRadiusY;
+
+
+    const maxY =
+        1 -
+        normalizedRadiusY;
+
 
     if (
         player.x <= minX ||
@@ -756,6 +956,7 @@ const maxY =
         player.vx *= -1;
     }
 
+
     if (
         player.y <= minY ||
         player.y >= maxY
@@ -763,12 +964,14 @@ const maxY =
         player.vy *= -1;
     }
 
+
     player.x =
         clamp(
             player.x,
             minX,
             maxX
         );
+
 
     player.y =
         clamp(
@@ -778,63 +981,47 @@ const maxY =
         );
 }
 
+
 function findCollisionPairs() {
-    const activePlayers =
-        list();
+    const settings =
+        get();
 
-    const collisions = [];
 
-    for (
-        let firstIndex = 0;
-        firstIndex < activePlayers.length;
-        firstIndex += 1
+    if (
+        settings.gameMode ===
+        'battle'
     ) {
-        for (
-            let secondIndex =
-                firstIndex + 1;
-            secondIndex < activePlayers.length;
-            secondIndex += 1
-        ) {
-            const first =
-                activePlayers[firstIndex];
+        return battleMode.findCollisions({
+            activePlayers:
+                list(),
 
-            const second =
-                activePlayers[secondIndex];
-
-            if (
-                canEat(first, second)
-            ) {
-                collisions.push({
-                    eaterId: first.id,
-                    targetId: second.id
-                });
-
-                continue;
-            }
-
-            if (
-                canEat(second, first)
-            ) {
-                collisions.push({
-                    eaterId: second.id,
-                    targetId: first.id
-                });
-            }
-        }
+            distanceBetween
+        });
     }
 
-    return collisions;
+
+    return classicMode.findCollisions({
+        activePlayers:
+            list(),
+
+        distanceBetween
+    });
 }
 
-function tick(deltaSeconds = 0.05) {
+
+function tick(
+    deltaSeconds = 0.05
+) {
     if (
-        roundStatus !== 'playing'
+        roundStatus !==
+        'playing'
     ) {
         return {
             eaten: [],
             winners: []
         };
     }
+
 
     const safeDelta =
         Math.min(
@@ -848,8 +1035,10 @@ function tick(deltaSeconds = 0.05) {
             )
         );
 
+
     for (
-        const player of players.values()
+        const player of
+        players.values()
     ) {
         movePlayer(
             player,
@@ -857,35 +1046,96 @@ function tick(deltaSeconds = 0.05) {
         );
     }
 
+
     const collisions =
         findCollisionPairs();
+
 
     const eaten = [];
     const winners = [];
 
-    for (
-        const collision of collisions
-    ) {
-        const result =
-            consume(
-                collision.eaterId,
-                collision.targetId
-            );
 
-        if (!result.ok) {
+    for (
+        const collision of
+        collisions
+    ) {
+        const settings =
+            get();
+
+
+        let result;
+
+
+        if (
+            settings.gameMode ===
+            'battle'
+        ) {
+            const first =
+                players.get(
+                    String(
+                        collision.firstId
+                    )
+                );
+
+
+            const second =
+                players.get(
+                    String(
+                        collision.secondId
+                    )
+                );
+
+
+            result =
+                battleMode.hit({
+                    first,
+                    second,
+                    settings,
+                    distanceBetween,
+                    players,
+                    eliminatedPlayers,
+                    roundParticipants,
+                    registerWinner,
+                    snapshot
+                });
+        } else {
+            result =
+                consume(
+                    collision.eaterId,
+                    collision.targetId
+                );
+        }
+
+
+        if (
+            !result.ok
+        ) {
             continue;
         }
 
-        eaten.push(result);
 
-        if (result.winner) {
+        recordCollisionStats(
+            result
+        );
+
+
+        eaten.push(
+            result
+        );
+
+
+        if (
+            result.winner
+        ) {
             winners.push(
                 result.winner
             );
 
+
             break;
         }
     }
+
 
     return {
         eaten,
@@ -893,40 +1143,54 @@ function tick(deltaSeconds = 0.05) {
     };
 }
 
+
 function claimWinner(
     playerId,
     viewportMin,
     clientRadius
 ) {
     if (
-        roundStatus !== 'playing'
+        roundStatus !==
+        'playing'
     ) {
         return {
             ok: false,
-            reason: 'round_finished'
+            reason:
+                'round_finished'
         };
     }
+
 
     const player =
         players.get(
-            String(playerId)
+            String(
+                playerId
+            )
         );
 
-    if (!player) {
-        return {
-            ok: false,
-            reason: 'player_not_found'
-        };
-    }
 
     if (
-        roundParticipants.size < 2
+        !player
     ) {
         return {
             ok: false,
-            reason: 'not_enough_players'
+            reason:
+                'player_not_found'
         };
     }
+
+
+    if (
+        roundParticipants.size <
+        2
+    ) {
+        return {
+            ok: false,
+            reason:
+                'not_enough_players'
+        };
+    }
+
 
     const minDimension =
         number(
@@ -934,61 +1198,95 @@ function claimWinner(
             0
         );
 
+
     const radius =
         number(
             clientRadius,
             player.radius
         );
 
+
     if (
         minDimension <= 0 ||
-        radius < minDimension * 0.42
+        radius <
+        minDimension * 0.42
     ) {
         return {
             ok: false,
-            reason: 'not_large_enough'
+            reason:
+                'not_large_enough'
         };
     }
 
+
     const winner =
-        registerWinner(player);
+        registerWinner(
+            player
+        );
+
 
     return {
         ok: true,
         winner,
-        state: snapshot()
+        state:
+            snapshot()
     };
 }
+
 
 function reset() {
     players.clear();
 
+
     eliminatedPlayers.clear();
+
 
     roundParticipants.clear();
 
-    roundNumber += 1;
-    roundStatus = 'playing';
-    currentWinner = null;
+
+    roundNumber +=
+        1;
+
+
+    roundStatus =
+        'playing';
+
+
+    currentWinner =
+        null;
 }
+
 
 function snapshot() {
     return {
-        players: list(),
+        players:
+            list(),
 
-        settings: get(),
+        settings:
+            get(),
 
         game: {
             roundNumber,
-            status: roundStatus,
-            winner: currentWinner,
-            podium: getPodium(),
+
+            status:
+                roundStatus,
+
+            winner:
+                currentWinner,
+
+            podium:
+                getPodium(),
+
+            podiumMode:
+                getCurrentMode(),
+
             eliminatedPlayers: [
                 ...eliminatedPlayers
             ]
         }
     };
 }
+
 
 module.exports = {
     add,

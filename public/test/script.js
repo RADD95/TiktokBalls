@@ -48,6 +48,26 @@ const resetButton =
         '#reset-game'
     );
 
+const gameModeInput =
+    form.elements.gameMode;
+
+
+const battleDamageInput =
+    form.elements.battleDamage;
+
+
+const battleDamageField =
+    battleDamageInput
+        ?.closest('.field');
+
+const battleRespawnInput =
+    form.elements.battleRespawn;
+
+
+const battleRespawnField =
+    battleRespawnInput
+        ?.closest('.field');
+
 const statStatus =
     document.querySelector(
         '#stat-status'
@@ -94,7 +114,11 @@ const settingsKeys = [
     'baseRadius',
     'pointsPerRadius',
     'maxRadius',
+    'gameMode',
+    'battleDamage',
+    'battleRespawn',
     'speed',
+
 
     'showNames',
     'showPoints',
@@ -146,6 +170,26 @@ function showMessage(
         'error',
         error
     );
+}
+
+function updateGameModeFields() {
+    const isBattle =
+        gameModeInput?.value ===
+        'battle';
+
+    if (
+        battleDamageField
+    ) {
+        battleDamageField.hidden =
+            !isBattle;
+    }
+
+    if (
+        battleRespawnField
+    ) {
+        battleRespawnField.hidden =
+            !isBattle;
+    }
 }
 
 function setConnectionState(state) {
@@ -262,6 +306,8 @@ function fillSettings(settings) {
                 settings[key] ?? '';
         }
     }
+
+    updateGameModeFields();
 }
 
 function updateOverlayDimensions(
@@ -349,26 +395,26 @@ async function loadSettings() {
             settings.height
         );
 
-const overlayBaseUrl =
-    `${location.origin}/overlay`;
+        const overlayBaseUrl =
+            `${location.origin}/overlay`;
 
-const rankingOverlayUrl =
-    `${location.origin}/overlay/ranking`;
+        const rankingOverlayUrl =
+            `${location.origin}/overlay/ranking`;
 
-const podiumOverlayUrl =
-    `${location.origin}/overlay/podium`;
+        const podiumOverlayUrl =
+            `${location.origin}/overlay/podium`;
 
-overlayUrl.value =
-    overlayBaseUrl;
+        overlayUrl.value =
+            overlayBaseUrl;
 
-rankingUrl.value =
-    rankingOverlayUrl;
+        rankingUrl.value =
+            rankingOverlayUrl;
 
-podiumUrl.value =
-    podiumOverlayUrl;
+        podiumUrl.value =
+            podiumOverlayUrl;
 
-overlayFrame.src =
-    overlayBaseUrl;
+        overlayFrame.src =
+            overlayBaseUrl;
 
         try {
             const connectionResponse =
@@ -687,6 +733,13 @@ socket.on(
             eventCount;
     }
 );
+
+if (gameModeInput) {
+    gameModeInput.addEventListener(
+        'change',
+        updateGameModeFields
+    );
+}
 
 form.addEventListener(
     'submit',

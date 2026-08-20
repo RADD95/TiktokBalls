@@ -34,6 +34,11 @@ const balls =
 const avatarImages =
     new Map();
 
+const defeatParticles = [];
+
+const DEFEAT_DURATION =
+    650;
+
 const defaultSettings = {
     showNames: true,
     showPoints: true,
@@ -332,9 +337,11 @@ function normalizePlayer(player) {
             ),
 
         radius:
-            Number(
-                player.radius
-            ) || 24,
+            Number.isFinite(
+                Number(player.radius)
+            )
+                ? Number(player.radius)
+                : 24,
 
         points:
             Number(
@@ -374,7 +381,9 @@ function createBall(player) {
             ) + 8000 || 0,
 
         effectUntil: 0,
-        alive: true
+        alive: true,
+        defeatStartedAt: 0,
+        defeatParticlesCreated: false
     };
 
     balls.set(
@@ -402,6 +411,35 @@ function updateBall(player) {
             normalized
         );
     }
+
+    const wasDefeated =
+        ball.player.status ===
+        'defeated';
+
+    const becomesDefeated =
+        settings.gameMode ===
+        'battle' &&
+        normalized.status ===
+        'defeated' &&
+        !wasDefeated;
+
+if (
+    becomesDefeated
+) {
+    ball.defeatStartedAt =
+        performance.now();
+
+    ball.defeatRadius =
+        Number(
+            ball.player.radius
+        ) || 24;
+
+    ball.defeatParticlesCreated =
+        false;
+
+    ball.alive =
+        true;
+}
 
     ball.player = {
         ...ball.player,
@@ -469,6 +507,17 @@ function renderState(state) {
         gameState.players ||
         [];
 
+        const visiblePlayers =
+    players.filter(
+        player =>
+            !(
+                settings.gameMode ===
+                    'battle' &&
+                player.status ===
+                    'defeated'
+            )
+    );
+
     const activeIds =
         new Set(
             players.map(
@@ -477,23 +526,34 @@ function renderState(state) {
             )
         );
 
-    for (
-        const id of balls.keys()
+for (
+    const id of balls.keys()
+) {
+    if (
+        !activeIds.has(id)
     ) {
+        const ball =
+            balls.get(id);
+
         if (
-            !activeIds.has(id)
+            ball?.player.status ===
+            'defeated' &&
+            ball.alive
         ) {
-            balls.delete(id);
+            continue;
         }
+
+        balls.delete(id);
     }
+}
 
     players.forEach(
         updateBall
     );
 
-    renderLeaderboard(
-        players
-    );
+renderLeaderboard(
+    visiblePlayers
+);
 
     renderPodium(
         gameState.podium || []
@@ -606,49 +666,49 @@ function renderLeaderboard(players) {
         'hidden'
     );
 
-leaderboard.style.setProperty(
-    '--ranking-font-family',
-    settings.rankingFontFamily ||
-    'Arial'
-);
+    leaderboard.style.setProperty(
+        '--ranking-font-family',
+        settings.rankingFontFamily ||
+        'Arial'
+    );
 
-leaderboard.style.setProperty(
-    '--ranking-font-size',
-    `${Number(
-        settings.rankingFontSize
-    ) || 14}px`
-);
+    leaderboard.style.setProperty(
+        '--ranking-font-size',
+        `${Number(
+            settings.rankingFontSize
+        ) || 14}px`
+    );
 
-leaderboard.style.setProperty(
-    '--ranking-font-weight',
-    settings.rankingFontWeight ||
-    '700'
-);
+    leaderboard.style.setProperty(
+        '--ranking-font-weight',
+        settings.rankingFontWeight ||
+        '700'
+    );
 
-leaderboard.style.setProperty(
-    '--ranking-text-color',
-    settings.rankingTextColor ||
-    '#ffffff'
-);
+    leaderboard.style.setProperty(
+        '--ranking-text-color',
+        settings.rankingTextColor ||
+        '#ffffff'
+    );
 
-leaderboard.style.setProperty(
-    '--ranking-title-color',
-    settings.rankingTitleColor ||
-    '#5ee7ff'
-);
+    leaderboard.style.setProperty(
+        '--ranking-title-color',
+        settings.rankingTitleColor ||
+        '#5ee7ff'
+    );
 
-leaderboard.style.setProperty(
-    '--ranking-points-color',
-    settings.rankingPointsColor ||
-    '#ffe66d'
-);
+    leaderboard.style.setProperty(
+        '--ranking-points-color',
+        settings.rankingPointsColor ||
+        '#ffe66d'
+    );
 
-leaderboard.style.setProperty(
-    '--ranking-title-size',
-    `${Number(
-        settings.rankingTitleSize
-    ) || 14}px`
-);
+    leaderboard.style.setProperty(
+        '--ranking-title-size',
+        `${Number(
+            settings.rankingTitleSize
+        ) || 14}px`
+    );
 
     const title =
         document.createElement(
@@ -762,49 +822,49 @@ function renderPodium(players) {
         'hidden'
     );
 
-podium.style.setProperty(
-    '--podium-font-family',
-    settings.podiumFontFamily ||
-    'Arial'
-);
+    podium.style.setProperty(
+        '--podium-font-family',
+        settings.podiumFontFamily ||
+        'Arial'
+    );
 
-podium.style.setProperty(
-    '--podium-font-size',
-    `${Number(
-        settings.podiumFontSize
-    ) || 14}px`
-);
+    podium.style.setProperty(
+        '--podium-font-size',
+        `${Number(
+            settings.podiumFontSize
+        ) || 14}px`
+    );
 
-podium.style.setProperty(
-    '--podium-font-weight',
-    settings.podiumFontWeight ||
-    '700'
-);
+    podium.style.setProperty(
+        '--podium-font-weight',
+        settings.podiumFontWeight ||
+        '700'
+    );
 
-podium.style.setProperty(
-    '--podium-text-color',
-    settings.podiumTextColor ||
-    '#ffffff'
-);
+    podium.style.setProperty(
+        '--podium-text-color',
+        settings.podiumTextColor ||
+        '#ffffff'
+    );
 
-podium.style.setProperty(
-    '--podium-title-color',
-    settings.podiumTitleColor ||
-    '#ffe66d'
-);
+    podium.style.setProperty(
+        '--podium-title-color',
+        settings.podiumTitleColor ||
+        '#ffe66d'
+    );
 
-podium.style.setProperty(
-    '--podium-wins-color',
-    settings.podiumWinsColor ||
-    '#ffe66d'
-);
+    podium.style.setProperty(
+        '--podium-wins-color',
+        settings.podiumWinsColor ||
+        '#ffe66d'
+    );
 
-podium.style.setProperty(
-    '--podium-title-size',
-    `${Number(
-        settings.podiumTitleSize
-    ) || 14}px`
-);
+    podium.style.setProperty(
+        '--podium-title-size',
+        `${Number(
+            settings.podiumTitleSize
+        ) || 14}px`
+    );
 
     const title =
         document.createElement(
@@ -1471,6 +1531,270 @@ function drawPlayerMessage(
     context.restore();
 }
 
+function createDefeatParticles(
+    ball,
+    x,
+    y,
+    radius
+) {
+    if (
+        ball.defeatParticlesCreated
+    ) {
+        return;
+    }
+
+    ball.defeatParticlesCreated =
+        true;
+
+    const color =
+        ball.player.color ||
+        '#5ee7ff';
+
+    for (
+        let index = 0;
+        index < 14;
+        index += 1
+    ) {
+        const angle =
+            Math.random() *
+            Math.PI *
+            2;
+
+        const speed =
+            70 +
+            Math.random() * 130;
+
+        defeatParticles.push({
+            x,
+            y,
+            vx:
+                Math.cos(angle) *
+                speed,
+
+            vy:
+                Math.sin(angle) *
+                speed,
+
+            radius:
+                2 +
+                Math.random() * 4,
+
+            color,
+            startedAt:
+                performance.now(),
+
+            duration:
+                450 +
+                Math.random() * 200
+        });
+    }
+}
+
+function drawDefeatParticles() {
+    const now =
+        performance.now();
+
+    for (
+        let index =
+            defeatParticles.length - 1;
+        index >= 0;
+        index -= 1
+    ) {
+        const particle =
+            defeatParticles[index];
+
+        const progress =
+            Math.min(
+                1,
+                (
+                    now -
+                    particle.startedAt
+                ) /
+                particle.duration
+            );
+
+        if (
+            progress >= 1
+        ) {
+            defeatParticles.splice(
+                index,
+                1
+            );
+
+            continue;
+        }
+
+        const seconds =
+            1 / 60;
+
+        particle.x +=
+            particle.vx *
+            seconds;
+
+        particle.y +=
+            particle.vy *
+            seconds;
+
+        particle.vy +=
+            120 *
+            seconds;
+
+        context.save();
+
+        context.globalAlpha =
+            1 - progress;
+
+        drawCircle(
+            particle.x,
+            particle.y,
+            particle.radius *
+            (
+                1 - progress
+            ),
+            particle.color
+        );
+
+        context.restore();
+    }
+}
+
+function drawDefeatedPlayer(
+    ball
+) {
+    const player =
+        ball.player;
+
+    const x =
+        Math.round(
+            ball.displayX *
+            canvasWidth
+        );
+
+    const y =
+        Math.round(
+            ball.displayY *
+            canvasHeight
+        );
+
+const originalRadius =
+    Math.max(
+        24,
+        Number(
+            ball.defeatRadius
+        ) || 24
+    );
+
+    const elapsed =
+        performance.now() -
+        ball.defeatStartedAt;
+
+    const progress =
+        Math.min(
+            1,
+            elapsed /
+            DEFEAT_DURATION
+        );
+
+    if (
+        progress >= 1
+    ) {
+        ball.alive =
+            false;
+
+        return;
+    }
+
+    if (
+        !ball.defeatParticlesCreated
+    ) {
+        createDefeatParticles(
+            ball,
+            x,
+            y,
+            originalRadius
+        );
+    }
+
+    const popProgress =
+        Math.min(
+            1,
+            progress / 0.18
+        );
+
+    const shrinkProgress =
+        Math.max(
+            0,
+            (
+                progress - 0.18
+            ) /
+            0.82
+        );
+
+    const popScale =
+        1 +
+        Math.sin(
+            popProgress *
+            Math.PI
+        ) *
+        0.18;
+
+    const scale =
+        popScale *
+        (
+            1 -
+            shrinkProgress
+        );
+
+    const radius =
+        Math.max(
+            1,
+            originalRadius *
+            scale
+        );
+
+    context.save();
+
+    context.globalAlpha =
+        1 - progress;
+
+    drawGlow(
+        x,
+        y,
+        radius,
+        player.color ||
+        '#5ee7ff',
+        true
+    );
+
+    drawCircle(
+        x,
+        y,
+        radius,
+        player.color ||
+        '#5ee7ff'
+    );
+
+    context.font =
+        '900 24px Arial';
+
+    context.textAlign =
+        'center';
+
+    context.textBaseline =
+        'middle';
+
+    context.fillStyle =
+        '#ff3b3b';
+
+    context.fillText(
+        '💥',
+        x,
+        y
+    );
+
+    context.restore();
+}
+
 function drawPlayer(ball) {
     const player =
         ball.player;
@@ -1582,11 +1906,37 @@ function drawFrame() {
         const ball of balls.values()
     ) {
         if (
-            ball.alive
+            !ball.alive
         ) {
-            drawPlayer(
+            continue;
+        }
+
+        if (
+            settings.gameMode === 'battle' &&
+            ball.player.status ===
+            'defeated'
+        ) {
+            drawDefeatedPlayer(
                 ball
             );
+
+            continue;
+        }
+
+        drawPlayer(
+            ball
+        );
+    }
+
+    drawDefeatParticles();
+
+    for (
+        const [id, ball] of balls.entries()
+    ) {
+        if (
+            !ball.alive
+        ) {
+            balls.delete(id);
         }
     }
 }
@@ -1611,6 +1961,9 @@ function showWinner(winner) {
 
 function resetLocalRound() {
     balls.clear();
+
+defeatParticles.length =
+    0;
 
     winnerBanner.classList.add(
         'hidden'
@@ -1728,6 +2081,32 @@ socket.on(
         if (ball) {
             ball.effectUntil =
                 Date.now() + 700;
+        }
+    }
+);
+
+socket.on(
+    'game:battle-hit',
+    (result) => {
+        if (
+            result?.state
+        ) {
+            renderState(
+                result.state
+            );
+        }
+    }
+);
+
+socket.on(
+    'game:battle-draw',
+    (result) => {
+        if (
+            result?.state
+        ) {
+            renderState(
+                result.state
+            );
         }
     }
 );

@@ -66,6 +66,7 @@ app.use(
     express.json()
 );
 
+
 app.use(
     express.static(
         path.join(
@@ -133,6 +134,9 @@ function getAllowedSettings() {
         'baseRadius',
         'pointsPerRadius',
         'maxRadius',
+        'gameMode',
+        'battleDamage',
+        'battleRespawn',
         'speed',
 
         'showNames',

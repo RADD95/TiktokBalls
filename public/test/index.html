@@ -299,7 +299,46 @@
                                 Juego
                             </h3>
 
+                            <div class="field">
+                                <label>
+                                    Modo de juego
+                                </label>
+
+                                <select name="gameMode">
+                                    <option value="classic">
+                                        Clásico
+                                    </option>
+
+                                    <option value="battle">
+                                        Batalla
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label>
+                                    Puntos perdidos por golpe
+                                </label>
+
+                                <input name="battleDamage" type="number" min="1" max="1000000" step="1">
+
+                                <small>
+                                    Solo se utiliza en el modo batalla.
+                                </small>
+                            </div>
+
+                            <div class="field">
+                                <label class="checkbox-field">
+                                    Permitir respawn de eliminados
+                                    <input name="battleRespawn" type="checkbox">
+                                    
+                                </label>
+                            </div>
+
+
+
                             <div class="field-grid">
+
                                 <div class="field">
                                     <label>
                                         Tamaño base
@@ -317,6 +356,8 @@
                                 </div>
                             </div>
 
+
+
                             <div class="field-grid">
                                 <div class="field">
                                     <label>
@@ -331,10 +372,12 @@
                                         Velocidad
                                     </label>
 
-                                    <input name="speed" type="number" min="0" step="0.1">
+                                    <input name="speed" type="number" min="0.1" step="0.1">
                                 </div>
                             </div>
                         </section>
+
+
 
                         <section class="section">
                             <h3 class="section-heading">
@@ -543,245 +586,203 @@
                         </section>
 
 
-<section class="section">
-    <h3 class="section-heading">
-        <span class="section-number">
-            6
-        </span>
+                        <section class="section">
+                            <h3 class="section-heading">
+                                <span class="section-number">
+                                    6
+                                </span>
 
-        Ranking y podio
-    </h3>
+                                Ranking y podio
+                            </h3>
 
-    <h4 class="subsection-heading">
-        Ranking
-    </h4>
+                            <h4 class="subsection-heading">
+                                Ranking
+                            </h4>
 
-    <div class="field">
-        <label>
-            Jugadores visibles
-        </label>
+                            <div class="field">
+                                <label>
+                                    Jugadores visibles
+                                </label>
 
-        <input
-            name="rankingLimit"
-            type="number"
-            min="1"
-            max="100"
-            step="1">
-    </div>
+                                <input name="rankingLimit" type="number" min="1" max="100" step="1">
+                            </div>
 
-    <div class="field">
-        <label>
-            Fuente
-        </label>
+                            <div class="field">
+                                <label>
+                                    Fuente
+                                </label>
 
-        <select name="rankingFontFamily">
-            <option value="Arial">Arial</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Tahoma">Tahoma</option>
-            <option value="Trebuchet MS">
-                Trebuchet MS
-            </option>
-            <option value="Georgia">Georgia</option>
-            <option value="Courier New">
-                Courier New
-            </option>
-            <option value="Impact">Impact</option>
-            <option value="Segoe UI">Segoe UI</option>
-        </select>
-    </div>
+                                <select name="rankingFontFamily">
+                                    <option value="Arial">Arial</option>
+                                    <option value="Verdana">Verdana</option>
+                                    <option value="Tahoma">Tahoma</option>
+                                    <option value="Trebuchet MS">
+                                        Trebuchet MS
+                                    </option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Courier New">
+                                        Courier New
+                                    </option>
+                                    <option value="Impact">Impact</option>
+                                    <option value="Segoe UI">Segoe UI</option>
+                                </select>
+                            </div>
 
-    <div class="field-grid">
-        <div class="field">
-            <label>
-                Tamaño del texto
-            </label>
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Tamaño del texto
+                                    </label>
 
-            <input
-                name="rankingFontSize"
-                type="number"
-                min="8"
-                max="120"
-                step="1">
-        </div>
+                                    <input name="rankingFontSize" type="number" min="8" max="120" step="1">
+                                </div>
 
-        <div class="field">
-            <label>
-                Peso
-            </label>
+                                <div class="field">
+                                    <label>
+                                        Peso
+                                    </label>
 
-            <select name="rankingFontWeight">
-                <option value="400">Normal</option>
-                <option value="500">Medium</option>
-                <option value="600">Semi-bold</option>
-                <option value="700">Bold</option>
-                <option value="800">Extra-bold</option>
-                <option value="900">Black</option>
-            </select>
-        </div>
-    </div>
+                                    <select name="rankingFontWeight">
+                                        <option value="400">Normal</option>
+                                        <option value="500">Medium</option>
+                                        <option value="600">Semi-bold</option>
+                                        <option value="700">Bold</option>
+                                        <option value="800">Extra-bold</option>
+                                        <option value="900">Black</option>
+                                    </select>
+                                </div>
+                            </div>
 
-    <div class="field-grid">
-        <div class="field">
-            <label>
-                Color del texto
-            </label>
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Color del texto
+                                    </label>
 
-            <input
-                name="rankingTextColor"
-                type="color">
-        </div>
+                                    <input name="rankingTextColor" type="color">
+                                </div>
 
-        <div class="field">
-            <label>
-                Color de puntos
-            </label>
+                                <div class="field">
+                                    <label>
+                                        Color de puntos
+                                    </label>
 
-            <input
-                name="rankingPointsColor"
-                type="color">
-        </div>
-    </div>
+                                    <input name="rankingPointsColor" type="color">
+                                </div>
+                            </div>
 
-    <div class="field-grid">
-        <div class="field">
-            <label>
-                Tamaño del título
-            </label>
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Tamaño del título
+                                    </label>
 
-            <input
-                name="rankingTitleSize"
-                type="number"
-                min="8"
-                max="120"
-                step="1">
-        </div>
+                                    <input name="rankingTitleSize" type="number" min="8" max="120" step="1">
+                                </div>
 
-        <div class="field">
-            <label>
-                Color del título
-            </label>
+                                <div class="field">
+                                    <label>
+                                        Color del título
+                                    </label>
 
-            <input
-                name="rankingTitleColor"
-                type="color">
-        </div>
-    </div>
+                                    <input name="rankingTitleColor" type="color">
+                                </div>
+                            </div>
 
-    <h4 class="subsection-heading">
-        Podio
-    </h4>
+                            <h4 class="subsection-heading">
+                                Podio
+                            </h4>
 
-    <div class="field">
-        <label>
-            Puestos visibles
-        </label>
+                            <div class="field">
+                                <label>
+                                    Puestos visibles
+                                </label>
 
-        <input
-            name="podiumLimit"
-            type="number"
-            min="1"
-            max="100"
-            step="1">
-    </div>
+                                <input name="podiumLimit" type="number" min="1" max="100" step="1">
+                            </div>
 
-    <div class="field">
-        <label>
-            Fuente
-        </label>
+                            <div class="field">
+                                <label>
+                                    Fuente
+                                </label>
 
-        <select name="podiumFontFamily">
-            <option value="Arial">Arial</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Tahoma">Tahoma</option>
-            <option value="Trebuchet MS">
-                Trebuchet MS
-            </option>
-            <option value="Georgia">Georgia</option>
-            <option value="Courier New">
-                Courier New
-            </option>
-            <option value="Impact">Impact</option>
-            <option value="Segoe UI">Segoe UI</option>
-        </select>
-    </div>
+                                <select name="podiumFontFamily">
+                                    <option value="Arial">Arial</option>
+                                    <option value="Verdana">Verdana</option>
+                                    <option value="Tahoma">Tahoma</option>
+                                    <option value="Trebuchet MS">
+                                        Trebuchet MS
+                                    </option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Courier New">
+                                        Courier New
+                                    </option>
+                                    <option value="Impact">Impact</option>
+                                    <option value="Segoe UI">Segoe UI</option>
+                                </select>
+                            </div>
 
-    <div class="field-grid">
-        <div class="field">
-            <label>
-                Tamaño del texto
-            </label>
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Tamaño del texto
+                                    </label>
 
-            <input
-                name="podiumFontSize"
-                type="number"
-                min="8"
-                max="120"
-                step="1">
-        </div>
+                                    <input name="podiumFontSize" type="number" min="8" max="120" step="1">
+                                </div>
 
-        <div class="field">
-            <label>
-                Peso
-            </label>
+                                <div class="field">
+                                    <label>
+                                        Peso
+                                    </label>
 
-            <select name="podiumFontWeight">
-                <option value="400">Normal</option>
-                <option value="500">Medium</option>
-                <option value="600">Semi-bold</option>
-                <option value="700">Bold</option>
-                <option value="800">Extra-bold</option>
-                <option value="900">Black</option>
-            </select>
-        </div>
-    </div>
+                                    <select name="podiumFontWeight">
+                                        <option value="400">Normal</option>
+                                        <option value="500">Medium</option>
+                                        <option value="600">Semi-bold</option>
+                                        <option value="700">Bold</option>
+                                        <option value="800">Extra-bold</option>
+                                        <option value="900">Black</option>
+                                    </select>
+                                </div>
+                            </div>
 
-    <div class="field-grid">
-        <div class="field">
-            <label>
-                Color del texto
-            </label>
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Color del texto
+                                    </label>
 
-            <input
-                name="podiumTextColor"
-                type="color">
-        </div>
+                                    <input name="podiumTextColor" type="color">
+                                </div>
 
-        <div class="field">
-            <label>
-                Color de victorias
-            </label>
+                                <div class="field">
+                                    <label>
+                                        Color de victorias
+                                    </label>
 
-            <input
-                name="podiumWinsColor"
-                type="color">
-        </div>
-    </div>
+                                    <input name="podiumWinsColor" type="color">
+                                </div>
+                            </div>
 
-    <div class="field-grid">
-        <div class="field">
-            <label>
-                Tamaño del título
-            </label>
+                            <div class="field-grid">
+                                <div class="field">
+                                    <label>
+                                        Tamaño del título
+                                    </label>
 
-            <input
-                name="podiumTitleSize"
-                type="number"
-                min="8"
-                max="120"
-                step="1">
-        </div>
+                                    <input name="podiumTitleSize" type="number" min="8" max="120" step="1">
+                                </div>
 
-        <div class="field">
-            <label>
-                Color del título
-            </label>
+                                <div class="field">
+                                    <label>
+                                        Color del título
+                                    </label>
 
-            <input
-                name="podiumTitleColor"
-                type="color">
-        </div>
-    </div>
-</section>
+                                    <input name="podiumTitleColor" type="color">
+                                </div>
+                            </div>
+                        </section>
 
 
                         <section class="section">

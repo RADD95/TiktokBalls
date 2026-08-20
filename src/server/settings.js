@@ -415,13 +415,34 @@ function normalizeSettings(input) {
                 1000
             ),
 
-maxRadius:
-    numberValue(
-        source.maxRadius,
-        0,
-        0,
-        9999999999
-    ),
+        maxRadius:
+            numberValue(
+                source.maxRadius,
+                0,
+                0,
+                9999999999
+            ),
+
+        gameMode:
+            source.gameMode === 'battle'
+                ? 'battle'
+                : 'classic',
+
+        battleDamage:
+            numberValue(
+                source.battleDamage,
+                1,
+                1,
+                1000000
+            ),
+
+
+        battleRespawn:
+            booleanValue(
+                source.battleRespawn,
+                false
+            ),
+
 
         speed:
             numberValue(

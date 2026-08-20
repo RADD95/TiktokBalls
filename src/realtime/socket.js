@@ -49,14 +49,38 @@ module.exports = function createSocketApi(
             return;
         }
 
-        for (
-            const eaten of result.eaten || []
-        ) {
-            io.emit(
-                'game:eaten',
-                eaten
-            );
-        }
+for (
+    const collision of result.eaten || []
+) {
+    if (
+        collision.type ===
+        'battle-hit'
+    ) {
+        io.emit(
+            'game:battle-hit',
+            collision
+        );
+
+        continue;
+    }
+
+    if (
+        collision.type ===
+        'battle-draw'
+    ) {
+        io.emit(
+            'game:battle-draw',
+            collision
+        );
+
+        continue;
+    }
+
+    io.emit(
+        'game:eaten',
+        collision
+    );
+}
 
         for (
             const winner of result.winners || []
