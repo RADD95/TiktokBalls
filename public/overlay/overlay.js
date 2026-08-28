@@ -468,6 +468,128 @@ if (
     return ball;
 }
 
+function startBattleDefeat(
+    defeatedPlayer
+) {
+    if (
+        !defeatedPlayer ||
+        !defeatedPlayer.id
+    ) {
+        return;
+    }
+
+
+    const id =
+        String(
+            defeatedPlayer.id
+        );
+
+
+    const normalized =
+        normalizePlayer(
+            defeatedPlayer
+        );
+
+
+    let ball =
+        balls.get(
+            id
+        );
+
+
+    if (
+        !ball
+    ) {
+        ball =
+            createBall(
+                normalized
+            );
+    }
+
+
+    /*
+     * Conserva la posición que la bolita tenía
+     * justo antes de ser eliminada. Si el backend
+     * envía la posición, se actualiza; si no, se
+     * usa la última posición visible local.
+     */
+    const currentX =
+        Number(
+            normalized.x
+        );
+
+
+    const currentY =
+        Number(
+            normalized.y
+        );
+
+
+    if (
+        Number.isFinite(
+            currentX
+        )
+    ) {
+        ball.targetX =
+            currentX;
+
+
+        ball.displayX =
+            currentX;
+    }
+
+
+    if (
+        Number.isFinite(
+            currentY
+        )
+    ) {
+        ball.targetY =
+            currentY;
+
+
+        ball.displayY =
+            currentY;
+    }
+
+
+    ball.player = {
+        ...ball.player,
+        ...normalized,
+
+        status:
+            'defeated',
+
+        points:
+            0
+    };
+
+
+    ball.defeatStartedAt =
+        performance.now();
+
+
+    ball.defeatRadius =
+        Math.max(
+            24,
+            Number(
+                defeatedPlayer.previousRadius
+            ) ||
+            Number(
+                ball.player.radius
+            ) ||
+            24
+        );
+
+
+    ball.defeatParticlesCreated =
+        false;
+
+
+    ball.alive =
+        true;
+}
+
 function renderState(state) {
     if (!state) {
         return;
@@ -1902,17 +2024,48 @@ function drawFrame() {
         canvasHeight
     );
 
+
+    const drawableBalls =
+        [
+            ...balls.values()
+        ]
+            .filter(
+                (ball) =>
+                    ball.alive
+            )
+            .sort(
+                (first, second) => {
+                    const firstRadius =
+                        Number(
+                            first.player.radius
+                        ) || 24;
+
+
+                    const secondRadius =
+                        Number(
+                            second.player.radius
+                        ) || 24;
+
+
+                    /*
+                     * Las bolas grandes se dibujan primero,
+                     * en el fondo. Las pequeñas se dibujan
+                     * después, por encima.
+                     */
+                    return (
+                        secondRadius -
+                        firstRadius
+                    );
+                }
+            );
+
+
     for (
-        const ball of balls.values()
+        const ball of drawableBalls
     ) {
         if (
-            !ball.alive
-        ) {
-            continue;
-        }
-
-        if (
-            settings.gameMode === 'battle' &&
+            settings.gameMode ===
+            'battle' &&
             ball.player.status ===
             'defeated'
         ) {
@@ -1920,15 +2073,23 @@ function drawFrame() {
                 ball
             );
 
+
             continue;
         }
+
 
         drawPlayer(
             ball
         );
     }
 
+
+    /*
+     * Las partículas se dibujan después de todas las bolas,
+     * para que la explosión nunca quede detrás de una gigante.
+     */
     drawDefeatParticles();
+
 
     for (
         const [id, ball] of balls.entries()
@@ -1936,7 +2097,9 @@ function drawFrame() {
         if (
             !ball.alive
         ) {
-            balls.delete(id);
+            balls.delete(
+                id
+            );
         }
     }
 }
@@ -2088,6 +2251,20 @@ socket.on(
 socket.on(
     'game:battle-hit',
     (result) => {
+        const defeatedPlayers =
+            result?.defeated || [];
+
+
+        for (
+            const defeatedPlayer of
+            defeatedPlayers
+        ) {
+            startBattleDefeat(
+                defeatedPlayer
+            );
+        }
+
+
         if (
             result?.state
         ) {

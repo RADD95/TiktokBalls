@@ -38,6 +38,11 @@ const podiumUrl =
         '#podium-url'
     );
 
+const podiumDetailedUrl =
+    document.querySelector(
+        '#podium-detailed-url'
+    );
+
 const openOverlayButton =
     document.querySelector(
         '#open-overlay'
@@ -401,6 +406,9 @@ async function loadSettings() {
         const rankingOverlayUrl =
             `${location.origin}/overlay/ranking`;
 
+        const podiumOverlayUrldetailed =
+            `${location.origin}/overlay/podium?detailed=true`;
+
         const podiumOverlayUrl =
             `${location.origin}/overlay/podium`;
 
@@ -409,6 +417,9 @@ async function loadSettings() {
 
         rankingUrl.value =
             rankingOverlayUrl;
+
+        podiumDetailedUrl.value =
+            podiumOverlayUrldetailed;
 
         podiumUrl.value =
             podiumOverlayUrl;

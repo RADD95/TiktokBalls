@@ -145,7 +145,10 @@ body {
         --podium-wins-color,
         #ffe66d
     );
-    font-size: 0.62em;
+    font-size: var(
+        --podium-font-size,
+        26px
+    );
     font-weight: var(
         --podium-font-weight,
         700

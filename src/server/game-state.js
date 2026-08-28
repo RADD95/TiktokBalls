@@ -919,68 +919,108 @@ function movePlayer(
         arena.height;
 
 
-    player.x +=
-        player.vx *
-        deltaSeconds *
-        speed;
+    const canMoveX =
+        normalizedRadiusX <
+        0.5;
 
 
-    player.y +=
-        player.vy *
-        deltaSeconds *
-        speed;
-
-
-    const minX =
-        normalizedRadiusX;
-
-
-    const maxX =
-        1 -
-        normalizedRadiusX;
-
-
-    const minY =
-        normalizedRadiusY;
-
-
-    const maxY =
-        1 -
-        normalizedRadiusY;
+    const canMoveY =
+        normalizedRadiusY <
+        0.5;
 
 
     if (
-        player.x <= minX ||
-        player.x >= maxX
+        canMoveX
     ) {
-        player.vx *= -1;
+        player.x +=
+            player.vx *
+            deltaSeconds *
+            speed;
+
+
+        const minX =
+            normalizedRadiusX;
+
+
+        const maxX =
+            1 -
+            normalizedRadiusX;
+
+
+        if (
+            player.x <= minX ||
+            player.x >= maxX
+        ) {
+            player.vx *= -1;
+        }
+
+
+        player.x =
+            clamp(
+                player.x,
+                minX,
+                maxX
+            );
+    } else {
+        /*
+         * La bola es más ancha que la arena.
+         * No hay límites válidos para moverla:
+         * se mantiene centrada horizontalmente.
+         */
+        player.x =
+            0.5;
+
+
+        player.vx =
+            0;
     }
 
 
     if (
-        player.y <= minY ||
-        player.y >= maxY
+        canMoveY
     ) {
-        player.vy *= -1;
+        player.y +=
+            player.vy *
+            deltaSeconds *
+            speed;
+
+
+        const minY =
+            normalizedRadiusY;
+
+
+        const maxY =
+            1 -
+            normalizedRadiusY;
+
+
+        if (
+            player.y <= minY ||
+            player.y >= maxY
+        ) {
+            player.vy *= -1;
+        }
+
+
+        player.y =
+            clamp(
+                player.y,
+                minY,
+                maxY
+            );
+    } else {
+        /*
+         * La bola es más alta que la arena.
+         * Se mantiene centrada verticalmente.
+         */
+        player.y =
+            0.5;
+
+
+        player.vy =
+            0;
     }
-
-
-    player.x =
-        clamp(
-            player.x,
-            minX,
-            maxX
-        );
-
-
-    player.y =
-        clamp(
-            player.y,
-            minY,
-            maxY
-        );
 }
-
 
 function findCollisionPairs() {
     const settings =

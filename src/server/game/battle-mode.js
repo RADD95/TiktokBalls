@@ -14,6 +14,21 @@ function number(
 }
 
 
+function clamp(
+    value,
+    minimum,
+    maximum
+) {
+    return Math.max(
+        minimum,
+        Math.min(
+            maximum,
+            value
+        )
+    );
+}
+
+
 function getArenaSize(
     settings
 ) {
@@ -56,46 +71,17 @@ function isActive(
 }
 
 
-function canCollide(
-    first,
-    second,
-    distanceBetween
+function getRadius(
+    player
 ) {
-    if (
-        !isActive(first) ||
-        !isActive(second) ||
-        first.id === second.id
-    ) {
-        return false;
-    }
-
-
-    const firstRadius =
-        number(
-            first.radius,
-            24
-        );
-
-
-    const secondRadius =
-        number(
-            second.radius,
-            24
-        );
-
-
-    return (
-        distanceBetween(
-            first,
-            second
-        ) <=
-        firstRadius +
-        secondRadius
+    return number(
+        player.radius,
+        24
     );
 }
 
 
-function separatePlayers(
+function getDistance(
     first,
     second,
     settings
@@ -122,7 +108,108 @@ function separatePlayers(
         arena.height;
 
 
-    let distance =
+    return Math.sqrt(
+        dx * dx +
+        dy * dy
+    );
+}
+
+
+function isContained(
+    first,
+    second,
+    distance
+) {
+    return (
+        distance <=
+        Math.abs(
+            getRadius(first) -
+            getRadius(second)
+        )
+    );
+}
+
+
+function dominatesArena(
+    player,
+    settings
+) {
+    const arena =
+        getArenaSize(
+            settings
+        );
+
+
+    const radius =
+        getRadius(player);
+
+
+    return (
+        radius >=
+        arena.width / 2 ||
+        radius >=
+        arena.height / 2
+    );
+}
+
+
+function canCollide(
+    first,
+    second,
+    distanceBetween
+) {
+    if (
+        !isActive(first) ||
+        !isActive(second) ||
+        first.id === second.id
+    ) {
+        return false;
+    }
+
+
+    const distance =
+        distanceBetween(
+            first,
+            second
+        );
+
+
+    return (
+        distance <=
+        getRadius(first) +
+        getRadius(second)
+    );
+}
+
+
+function getNormal(
+    first,
+    second,
+    settings
+) {
+    const arena =
+        getArenaSize(
+            settings
+        );
+
+
+    const dx =
+        (
+            second.x -
+            first.x
+        ) *
+        arena.width;
+
+
+    const dy =
+        (
+            second.y -
+            first.y
+        ) *
+        arena.height;
+
+
+    const distance =
         Math.sqrt(
             dx * dx +
             dy * dy
@@ -132,47 +219,333 @@ function separatePlayers(
     if (
         distance < 0.0001
     ) {
-        distance =
-            0.0001;
+        return {
+            x: 1,
+            y: 0,
+            distance: 0
+        };
     }
 
 
-    const firstRadius =
+    return {
+        x:
+            dx / distance,
+
+        y:
+            dy / distance,
+
+        distance
+    };
+}
+
+
+function keepPlayerInsideArena(
+    player,
+    settings
+) {
+    const arena =
+        getArenaSize(
+            settings
+        );
+
+
+    const radius =
+        getRadius(
+            player
+        );
+
+
+    const normalizedRadiusX =
+        radius /
+        arena.width;
+
+
+    const normalizedRadiusY =
+        radius /
+        arena.height;
+
+
+    if (
+        normalizedRadiusX <
+        0.5
+    ) {
+        player.x =
+            clamp(
+                player.x,
+                normalizedRadiusX,
+                1 - normalizedRadiusX
+            );
+    } else {
+        player.x =
+            0.5;
+    }
+
+
+    if (
+        normalizedRadiusY <
+        0.5
+    ) {
+        player.y =
+            clamp(
+                player.y,
+                normalizedRadiusY,
+                1 - normalizedRadiusY
+            );
+    } else {
+        player.y =
+            0.5;
+    }
+}
+
+
+function limitVelocity(
+    player,
+    maximum = 0.42
+) {
+    const speed =
+        Math.sqrt(
+            player.vx *
+            player.vx +
+            player.vy *
+            player.vy
+        );
+
+
+    if (
+        speed <= maximum ||
+        speed <= 0.0001
+    ) {
+        return;
+    }
+
+
+    const multiplier =
+        maximum /
+        speed;
+
+
+    player.vx *=
+        multiplier;
+
+
+    player.vy *=
+        multiplier;
+}
+
+
+function applyPressureImpulse(
+    target,
+    attacker,
+    settings,
+    now
+) {
+    const arena =
+        getArenaSize(
+            settings
+        );
+
+
+    const angleSeed =
+        (
+            number(
+                target.pressureHitCount,
+                0
+            ) * 2.399963229728653
+        ) +
+        (
+            number(
+                now,
+                0
+            ) * 0.001
+        );
+
+
+    const directionX =
+        Math.cos(
+            angleSeed
+        );
+
+
+    const directionY =
+        Math.sin(
+            angleSeed
+        );
+
+
+    const pressure =
+        0.13;
+
+
+    target.vx =
+        target.vx * 0.55 +
+        directionX * pressure;
+
+
+    target.vy =
+        target.vy * 0.55 +
+        directionY * pressure;
+
+
+    target.pressureHitCount =
         number(
-            first.radius,
-            24
+            target.pressureHitCount,
+            0
+        ) +
+        1;
+
+
+    limitVelocity(
+        target
+    );
+
+
+    const radius =
+        getRadius(
+            target
+        );
+
+
+    const normalizedRadiusX =
+        radius /
+        arena.width;
+
+
+    const normalizedRadiusY =
+        radius /
+        arena.height;
+
+
+    if (
+        normalizedRadiusX <
+        0.5
+    ) {
+        target.x =
+            clamp(
+                target.x,
+                normalizedRadiusX,
+                1 - normalizedRadiusX
+            );
+    }
+
+
+    if (
+        normalizedRadiusY <
+        0.5
+    ) {
+        target.y =
+            clamp(
+                target.y,
+                normalizedRadiusY,
+                1 - normalizedRadiusY
+            );
+    }
+
+
+    attacker.vx =
+        attacker.vx * 0.96;
+
+
+    attacker.vy =
+        attacker.vy * 0.96;
+}
+
+
+function separatePlayers(
+    first,
+    second,
+    settings
+) {
+    const normal =
+        getNormal(
+            first,
+            second,
+            settings
+        );
+
+
+    const firstRadius =
+        getRadius(
+            first
         );
 
 
     const secondRadius =
-        number(
-            second.radius,
-            24
+        getRadius(
+            second
         );
 
 
-    const normalX =
-        dx / distance;
+    const contained =
+        isContained(
+            first,
+            second,
+            normal.distance
+        );
 
 
-    const normalY =
-        dy / distance;
+    const arenaDominating =
+        dominatesArena(
+            first,
+            settings
+        ) ||
+        dominatesArena(
+            second,
+            settings
+        );
+
+
+    /*
+     * Contención o arena dominada:
+     * no se aplica corrección de posición.
+     * La respuesta será presión controlada sobre
+     * la bolita con menor radio.
+     */
+    if (
+        contained ||
+        arenaDominating
+    ) {
+        return {
+            normalX:
+                normal.x,
+
+            normalY:
+                normal.y,
+
+            contained,
+            arenaDominating
+        };
+    }
 
 
     const overlap =
         firstRadius +
         secondRadius -
-        distance;
+        normal.distance;
 
 
     if (
         overlap <= 0
     ) {
         return {
-            normalX,
-            normalY
+            normalX:
+                normal.x,
+
+            normalY:
+                normal.y,
+
+            contained:
+                false,
+
+            arenaDominating:
+                false
         };
     }
+
+
+    const arena =
+        getArenaSize(
+            settings
+        );
 
 
     const correction =
@@ -181,7 +554,7 @@ function separatePlayers(
 
     first.x -=
         (
-            normalX *
+            normal.x *
             correction
         ) /
         arena.width;
@@ -189,7 +562,7 @@ function separatePlayers(
 
     first.y -=
         (
-            normalY *
+            normal.y *
             correction
         ) /
         arena.height;
@@ -197,7 +570,7 @@ function separatePlayers(
 
     second.x +=
         (
-            normalX *
+            normal.x *
             correction
         ) /
         arena.width;
@@ -205,55 +578,36 @@ function separatePlayers(
 
     second.y +=
         (
-            normalY *
+            normal.y *
             correction
         ) /
         arena.height;
 
 
-    first.x =
-        Math.max(
-            0.001,
-            Math.min(
-                0.999,
-                first.x
-            )
-        );
+    keepPlayerInsideArena(
+        first,
+        settings
+    );
 
 
-    first.y =
-        Math.max(
-            0.001,
-            Math.min(
-                0.999,
-                first.y
-            )
-        );
-
-
-    second.x =
-        Math.max(
-            0.001,
-            Math.min(
-                0.999,
-                second.x
-            )
-        );
-
-
-    second.y =
-        Math.max(
-            0.001,
-            Math.min(
-                0.999,
-                second.y
-            )
-        );
+    keepPlayerInsideArena(
+        second,
+        settings
+    );
 
 
     return {
-        normalX,
-        normalY
+        normalX:
+            normal.x,
+
+        normalY:
+            normal.y,
+
+        contained:
+            false,
+
+        arenaDominating:
+            false
     };
 }
 
@@ -261,12 +615,10 @@ function separatePlayers(
 function bounce(
     first,
     second,
-    settings
+    settings,
+    now
 ) {
-    const {
-        normalX,
-        normalY
-    } =
+    const collision =
         separatePlayers(
             first,
             second,
@@ -274,17 +626,46 @@ function bounce(
         );
 
 
+    if (
+        collision.contained ||
+        collision.arenaDominating
+    ) {
+        const target =
+            getRadius(first) <=
+            getRadius(second)
+                ? first
+                : second;
+
+
+        const attacker =
+            target.id === first.id
+                ? second
+                : first;
+
+
+        applyPressureImpulse(
+            target,
+            attacker,
+            settings,
+            now
+        );
+
+
+        return;
+    }
+
+
     const relativeVelocity =
         (
             second.vx -
             first.vx
         ) *
-        normalX +
+        collision.normalX +
         (
             second.vy -
             first.vy
         ) *
-        normalY;
+        collision.normalY;
 
 
     if (
@@ -300,22 +681,32 @@ function bounce(
 
     first.vx +=
         impulse *
-        normalX;
+        collision.normalX;
 
 
     first.vy +=
         impulse *
-        normalY;
+        collision.normalY;
 
 
     second.vx -=
         impulse *
-        normalX;
+        collision.normalX;
 
 
     second.vy -=
         impulse *
-        normalY;
+        collision.normalY;
+
+
+    limitVelocity(
+        first
+    );
+
+
+    limitVelocity(
+        second
+    );
 }
 
 
@@ -446,9 +837,8 @@ function createDefeatedSnapshot(
             'defeated',
 
         previousRadius:
-            number(
-                target.radius,
-                24
+            getRadius(
+                target
             ),
 
         message:
@@ -542,7 +932,8 @@ function hit({
     bounce(
         first,
         second,
-        settings
+        settings,
+        now
     );
 
 

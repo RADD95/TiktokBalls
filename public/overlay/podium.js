@@ -7,6 +7,17 @@ const podium =
         '#podium'
     );
 
+const urlParameters =
+    new URLSearchParams(
+        window.location.search
+    );
+
+
+const showDetailedStats =
+    urlParameters.get(
+        'detailed'
+    ) === 'true';
+
 
 let podiumSettings = {
     podiumLimit:
@@ -334,14 +345,21 @@ function renderPodium(
                     );
 
 
-                const stats =
-                    mode === 'battle'
-                        ? renderBattleStats(
-                            player
-                        )
-                        : renderClassicStats(
-                            player
-                        );
+const stats =
+    showDetailedStats
+        ? (
+            mode === 'battle'
+                ? renderBattleStats(
+                    player
+                )
+                : renderClassicStats(
+                    player
+                )
+        )
+        : createStat(
+            'podium-wins',
+            `${player.wins || 0} 🏆`
+        );
 
 
                 row.appendChild(
