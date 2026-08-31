@@ -227,6 +227,8 @@ function get(
     mode,
     limit = 10
 ) {
+    const { getPlayerColor } = require('./player-colors');
+
     return read(mode)
         .map(
             normalizeEntry
@@ -246,7 +248,6 @@ function get(
                     );
                 }
 
-
                 if (
                     second.ballsEaten !==
                     first.ballsEaten
@@ -257,7 +258,6 @@ function get(
                     );
                 }
 
-
                 if (
                     second.damageDealt !==
                     first.damageDealt
@@ -267,7 +267,6 @@ function get(
                         first.damageDealt
                     );
                 }
-
 
                 return (
                     second.pointsEarned -
@@ -281,7 +280,14 @@ function get(
                 1,
                 toNumber(limit) || 10
             )
-        );
+        )
+        .map(player => {
+            const colorConfig = getPlayerColor(player.userId);
+            return {
+                ...player,
+                customColor: colorConfig?.nameColor || null
+            };
+        });
 }
 
 
@@ -315,12 +321,14 @@ function updateIdentity(
     }
 
 
+
     if (
         player.username
     ) {
         entry.username =
             player.username;
     }
+
 
 
     if (
@@ -331,6 +339,7 @@ function updateIdentity(
     }
 
 
+
     if (
         player.avatar
     ) {
@@ -338,7 +347,6 @@ function updateIdentity(
             player.avatar;
     }
 }
-
 
 function getOrCreatePlayer(
     entries,
@@ -350,11 +358,13 @@ function getOrCreatePlayer(
         );
 
 
+
     let entry =
         findPlayer(
             entries,
             playerId
         );
+
 
 
     if (
@@ -364,24 +374,32 @@ function getOrCreatePlayer(
             id:
                 playerId,
 
+
             userId:
                 String(
                     player.userId || ''
                 ),
 
+
             username:
                 player.username || '',
+
 
             nickname:
                 player.nickname ||
                 player.username ||
                 '',
 
+
             avatar:
                 player.avatar || '',
 
+
+
+
             ...DEFAULT_STATS
         };
+
 
 
         entries.push(
@@ -390,10 +408,13 @@ function getOrCreatePlayer(
     }
 
 
+
     updateIdentity(
         entry,
         player
     );
+
+
 
 
     return normalizeEntry(

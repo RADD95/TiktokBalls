@@ -260,6 +260,127 @@ function getDisplayName(player) {
     );
 }
 
+function getPlayerColorConfig(player) {
+    const customColor =
+        player?.customColor;
+
+    if (
+        !customColor ||
+        typeof customColor !== 'object'
+    ) {
+        return {
+            type: 'solid',
+            color1:
+                settings.nameTextColor ||
+                '#ffffff',
+            color2: null
+        };
+    }
+
+    return {
+        type:
+            customColor.type ||
+            'solid',
+
+        color1:
+            customColor.color1 ||
+            settings.nameTextColor ||
+            '#ffffff',
+
+        color2:
+            customColor.color2 ||
+            null
+    };
+}
+
+function getPlayerColor(player) {
+    const config =
+        getPlayerColorConfig(
+            player
+        );
+
+    if (
+        config.type ===
+        'rainbow'
+    ) {
+        return `hsl(${(
+            Date.now() / 20
+        ) % 360}, 100%, 50%)`;
+    }
+
+    return config.color1;
+}
+
+function getPlayerGradient(
+    player,
+    x,
+    y,
+    width,
+    height
+) {
+    const config =
+        getPlayerColorConfig(
+            player
+        );
+
+    if (
+        config.type ===
+        'rainbow'
+    ) {
+        const gradient =
+            context.createLinearGradient(
+                x,
+                y,
+                x + width,
+                y + height
+            );
+
+        for (
+            let index = 0;
+            index <= 6;
+            index += 1
+        ) {
+            gradient.addColorStop(
+                index / 6,
+                `hsl(${(
+                    Date.now() / 20 +
+                    index * 60
+                ) % 360}, 100%, 50%)`
+            );
+        }
+
+        return gradient;
+    }
+
+    if (
+        config.type === 'gradient' &&
+        config.color1 &&
+        config.color2
+    ) {
+        const gradient =
+            context.createLinearGradient(
+                x,
+                y,
+                x + width,
+                y + height
+            );
+
+        gradient.addColorStop(
+            0,
+            config.color1
+        );
+
+        gradient.addColorStop(
+            1,
+            config.color2
+        );
+
+        return gradient;
+    }
+
+    return config.color1;
+}
+
 function getAvatar(url) {
     if (!url) {
         return null;
@@ -891,9 +1012,32 @@ function renderLeaderboard(players) {
                 `${index + 1}. ` +
                 getDisplayName(player);
 
-            name.style.color =
-                settings.rankingTextColor ||
-                '#ffffff';
+            const colorConfig =
+                getPlayerColorConfig(
+                    player
+                );
+
+            if (
+                colorConfig.type ===
+                'rainbow'
+            ) {
+                name.style.backgroundImage =
+                    'linear-gradient(' +
+                    '90deg, red, orange, ' +
+                    'yellow, green, blue, ' +
+                    'violet)';
+
+                name.style.webkitBackgroundClip =
+                    'text';
+
+                name.style.webkitTextFillColor =
+                    'transparent';
+            } else {
+                name.style.color =
+                    colorConfig.color2
+                        ? colorConfig.color1
+                        : colorConfig.color1;
+            }
 
             const points =
                 document.createElement(
@@ -1070,9 +1214,30 @@ function renderPodium(players) {
                         player
                     );
 
-                name.style.color =
-                    settings.podiumTextColor ||
-                    '#ffffff';
+                const colorConfig =
+                    getPlayerColorConfig(
+                        player
+                    );
+
+                if (
+                    colorConfig.type ===
+                    'rainbow'
+                ) {
+                    name.style.backgroundImage =
+                        'linear-gradient(' +
+                        '90deg, red, orange, ' +
+                        'yellow, green, blue, ' +
+                        'violet)';
+
+                    name.style.webkitBackgroundClip =
+                        'text';
+
+                    name.style.webkitTextFillColor =
+                        'transparent';
+                } else {
+                    name.style.color =
+                        colorConfig.color1;
+                }
 
                 const wins =
                     document.createElement(
@@ -1512,9 +1677,26 @@ function drawPlayerName(
         'rgba(0, 0, 0, 0.72)'
     );
 
-    context.fillStyle =
-        settings.nameTextColor ||
-        '#ffffff';
+    const nameColor =
+        player?.customColor;
+
+    if (
+        nameColor &&
+        typeof nameColor === 'object'
+    ) {
+        context.fillStyle =
+            getPlayerGradient(
+                player,
+                x - boxWidth / 2,
+                boxY,
+                boxWidth,
+                boxHeight
+            );
+    } else {
+        context.fillStyle =
+            settings.nameTextColor ||
+            '#ffffff';
+    }
 
     context.fillText(
         safeText,
@@ -1940,9 +2122,12 @@ function drawPlayer(ball) {
             ) || 24
         );
 
-    const color =
-        player.color ||
-        '#5ee7ff';
+const ballColorConfig = player.ballColorConfig;
+let color = player.color || '#5ee7ff';
+
+if (ballColorConfig && ballColorConfig.type === 'rainbow') {
+    color = `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
+}
 
     const image =
         getAvatar(

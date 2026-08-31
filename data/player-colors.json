@@ -1,0 +1,84 @@
+{
+  "user8": {
+    "id": "user8",
+    "userId": "user8",
+    "username": "User8",
+    "nickname": "User8",
+    "nameColor": {
+      "type": "gradient",
+      "color1": "#0000ff",
+      "color2": "#ff0000"
+    },
+    "updatedAt": 1787964113128,
+    "ballColor": {
+      "type": "rainbow",
+      "color1": null,
+      "color2": null
+    }
+  },
+  "user7": {
+    "id": "user7",
+    "userId": "user7",
+    "username": "User7",
+    "nickname": "User7",
+    "nameColor": {
+      "type": "rainbow",
+      "color1": null,
+      "color2": null
+    },
+    "updatedAt": 1787966068867
+  },
+  "user6": {
+    "id": "user6",
+    "userId": "user6",
+    "username": "User6",
+    "nickname": "User6",
+    "ballColor": {
+      "type": "gradient",
+      "color1": "#00ffff",
+      "color2": "#ff00ff"
+    },
+    "updatedAt": 1787965784615,
+    "nameColor": {
+      "type": "gradient",
+      "color1": "#00ffff",
+      "color2": "#ff00ff"
+    }
+  },
+  "user78": {
+    "id": "user78",
+    "userId": "user78",
+    "username": "User7 * 1",
+    "nickname": "User7 * 1",
+    "nameColor": {
+      "type": "rainbow",
+      "color1": null,
+      "color2": null
+    },
+    "updatedAt": 1787966063315
+  },
+  "jugador1": {
+    "id": "jugador1",
+    "userId": "jugador1",
+    "username": "jugador1",
+    "nickname": "jugador1",
+    "nameColor": {
+      "type": "rainbow",
+      "color1": null,
+      "color2": null
+    },
+    "updatedAt": 1788208272348
+  },
+  "jugador11": {
+    "id": "jugador11",
+    "userId": "jugador11",
+    "username": "jugador11",
+    "nickname": "jugador11",
+    "nameColor": {
+      "type": "solid",
+      "color1": "#ff0000",
+      "color2": null
+    },
+    "updatedAt": 1788204569633
+  }
+}

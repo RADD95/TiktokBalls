@@ -13,6 +13,9 @@ const {
 } =
     require('./points');
 
+const {
+    getPlayerColor
+} = require('./player-colors');
 
 const podium =
     require('./podium');
@@ -282,9 +285,61 @@ function createPlayer(
         );
 
 
+    const playerColor =
+        getPlayerColor(playerId);
+
+
+    /*
+     * Determinar color de la bolita:
+     * - Si tiene ballColor → usar ese
+     * - Si no tiene ballColor pero tiene color1 (legacy) → usar color1
+     * - Si no tiene nada → color random por defecto
+     */
+    const ballColorConfig = playerColor?.ballColor;
+    let ballColor;
+
+    if (ballColorConfig) {
+        if (ballColorConfig.type === 'rainbow') {
+            ballColor = 'rainbow';
+        } else {
+            ballColor = ballColorConfig.color1 || getColor(playerId);
+        }
+    } else if (playerColor?.color1) {
+        // Legacy: si tiene color1 pero no ballColor separado
+        ballColor = playerColor.color1;
+    } else {
+        // Sin configuración → color random
+        ballColor = getColor(playerId);
+    }
+
+
+    /*
+     * Determinar configuración de color del nombre:
+     * - Si tiene nameColor → usar ese
+     * - Si no tiene nameColor pero tiene color1 (legacy) → usar color1
+     * - Si no tiene nada → null (el overlay usa blanco por defecto)
+     */
+    const nameColorConfig = playerColor?.nameColor;
+    let customColorForName;
+
+    if (nameColorConfig) {
+        customColorForName = nameColorConfig;
+    } else if (playerColor?.color1) {
+        // Legacy: si tiene color1 pero no nameColor separado
+        customColorForName = {
+            type: playerColor.type || 'solid',
+            color1: playerColor.color1,
+            color2: playerColor.color2 || null
+        };
+    } else {
+        customColorForName = null;
+    }
+
+
     return {
         id:
             playerId,
+
 
         userId:
             String(
@@ -294,6 +349,7 @@ function createPlayer(
                 playerId
             ),
 
+
         uniqueId:
             String(
                 event.uniqueId ||
@@ -301,10 +357,12 @@ function createPlayer(
                 playerId
             ),
 
+
         username:
             event.username ||
             event.uniqueId ||
             'viewer',
+
 
         nickname:
             event.nickname ||
@@ -312,12 +370,15 @@ function createPlayer(
             event.uniqueId ||
             'viewer',
 
+
         avatar:
             event.avatar ||
             '',
 
+
         points:
             0,
+
 
         radius:
             number(
@@ -325,20 +386,32 @@ function createPlayer(
                 24
             ),
 
-        color:
-            getColor(
-                playerId
-            ),
+
+color: ballColorConfig && ballColorConfig.type === 'rainbow'
+    ? 'rainbow'
+    : ballColorConfig && ballColorConfig.type === 'gradient'
+        ? ballColorConfig.color1 || getColor(playerId)
+        : ballColor,
+
+ballColorConfig: ballColorConfig || null,
+
+
+        customColor:
+            customColorForName ||
+            null,
+
 
         x:
             0.12 +
             Math.random() *
             0.76,
 
+
         y:
             0.12 +
             Math.random() *
             0.76,
+
 
         vx:
             (
@@ -352,6 +425,7 @@ function createPlayer(
                 0.12
             ),
 
+
         vy:
             (
                 Math.random() > 0.5
@@ -364,17 +438,22 @@ function createPlayer(
                 0.12
             ),
 
+
         message:
             '',
+
 
         messageUpdatedAt:
             0,
 
+
         lastEventType:
             null,
 
+
         lastGiftName:
             '',
+
 
         lastEventAt:
             Date.now()
@@ -412,12 +491,12 @@ function add(
 
     const canRespawn =
         settings.gameMode ===
-            'classic' ||
+        'classic' ||
         (
             settings.gameMode ===
-                'battle' &&
+            'battle' &&
             settings.battleRespawn ===
-                true
+            true
         );
 
 
