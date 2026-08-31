@@ -447,6 +447,7 @@ function applyPressureImpulse(
 
     attacker.vy =
         attacker.vy * 0.96;
+
 }
 
 
@@ -632,7 +633,7 @@ function bounce(
     ) {
         const target =
             getRadius(first) <=
-            getRadius(second)
+                getRadius(second)
                 ? first
                 : second;
 
@@ -790,13 +791,13 @@ function findCollisions({
         ) {
             const first =
                 activePlayers[
-                    firstIndex
+                firstIndex
                 ];
 
 
             const second =
                 activePlayers[
-                    secondIndex
+                secondIndex
                 ];
 
 
@@ -882,29 +883,26 @@ function hit({
     const now =
         Date.now();
 
+    /*
+     * Cooldown por par de bolitas, no global.
+     * Cada par único tiene su propio timer.
+     */
+    const pairKey =
+        [first.id, second.id]
+            .sort()
+            .join('-');
+
+    const pairCooldowns =
+        first.pairCooldowns || {};
+
+    const pairLastHit =
+        pairCooldowns[pairKey] || 0;
 
     const cooldown =
         400;
 
-
-    const firstLastHit =
-        number(
-            first.lastBattleHitAt,
-            0
-        );
-
-
-    const secondLastHit =
-        number(
-            second.lastBattleHitAt,
-            0
-        );
-
-
     if (
-        now - firstLastHit <
-        cooldown ||
-        now - secondLastHit <
+        now - pairLastHit <
         cooldown
     ) {
         return {
@@ -1008,7 +1006,7 @@ function hit({
 
     const attacker =
         firstPoints >
-        secondPoints
+            secondPoints
             ? first
             : second;
 
@@ -1028,15 +1026,92 @@ function hit({
             )
         );
 
+    const attackerPoints =
+        number(
+            attacker.points,
+            0
+        );
+
+    const targetPoints =
+        number(
+            target.points,
+            0
+        );
+
+    const scaledDamageEnabled =
+        Boolean(
+            settings.battleScaledDamage
+        );
+
+    const damageMultiplier =
+        Math.max(
+            0.1,
+            number(
+                settings.battleDamageMultiplier,
+                1,
+                0.1,
+                100
+            )
+        );
+
+    let finalDamage =
+        damage;
+
+    if (
+        scaledDamageEnabled &&
+        attackerPoints >
+        targetPoints &&
+        attackerPoints > 0
+    ) {
+        const ventajaRelativa =
+            (
+                attackerPoints -
+                targetPoints
+            ) /
+            attackerPoints;
+
+        const porcentaje =
+            0.01 +
+            (
+                0.11 *
+                ventajaRelativa
+            );
+
+        const damageProporcional =
+            Math.ceil(
+                targetPoints *
+                porcentaje *
+                damageMultiplier
+            );
+
+        finalDamage =
+            Math.max(
+                damage,
+                damageProporcional
+            );
+    }
+
+    const maxDamagePorGolpe =
+        Math.floor(
+            targetPoints * 0.8
+        );
+
+    if (
+        finalDamage > maxDamagePorGolpe &&
+        targetPoints > damage
+    ) {
+        finalDamage =
+            Math.max(
+                damage,
+                maxDamagePorGolpe
+            );
+    }
 
     target.points =
         Math.max(
             0,
-            number(
-                target.points,
-                0
-            ) -
-            damage
+            targetPoints -
+            finalDamage
         );
 
 
@@ -1049,7 +1124,7 @@ function hit({
 
     target.damagePopup = {
         amount:
-            damage,
+            finalDamage,
 
         createdAt:
             now
@@ -1065,7 +1140,7 @@ function hit({
 
 
     target.message =
-        `-${damage}`;
+        `-${finalDamage}`;
 
 
     target.messageUpdatedAt =
@@ -1129,6 +1204,29 @@ function hit({
             );
     }
 
+    if (
+        activePlayers.length === 1 &&
+        roundParticipants.size >= 2
+    ) {
+        winner =
+            registerWinner(
+                activePlayers[0]
+            );
+    }
+
+    /*
+     * Guarda el timestamp del último golpe para este par.
+     */
+    if (!first.pairCooldowns) {
+        first.pairCooldowns = {};
+    }
+
+    if (!second.pairCooldowns) {
+        second.pairCooldowns = {};
+    }
+
+    first.pairCooldowns[pairKey] = now;
+    second.pairCooldowns[pairKey] = now;
 
     return {
         ok: true,
@@ -1162,10 +1260,10 @@ function hit({
                 1,
 
             damageDealt:
-                damage,
+                finalDamage,
 
             damageReceived:
-                damage,
+                finalDamage,
 
             targetDefeated:
                 Boolean(

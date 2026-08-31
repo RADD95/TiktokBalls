@@ -137,6 +137,8 @@ function getAllowedSettings() {
         'gameMode',
         'battleDamage',
         'battleRespawn',
+        'battleScaledDamage',
+        'battleDamageMultiplier',
         'speed',
 
         'showNames',

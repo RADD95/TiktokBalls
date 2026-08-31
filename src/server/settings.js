@@ -444,6 +444,31 @@ function normalizeSettings(input) {
             ),
 
 
+        /*
+         * Si está desactivado, cada golpe usa únicamente
+         * battleDamage, como hasta ahora.
+         */
+        battleScaledDamage:
+            booleanValue(
+                source.battleScaledDamage,
+                false
+            ),
+
+        /*
+         * Ajusta solo la parte proporcional del daño.
+         *
+         * 1.00 = fórmula recomendada.
+         * 0.50 = mitad de daño proporcional.
+         * 2.00 = doble de daño proporcional.
+         */
+        battleDamageMultiplier:
+            numberValue(
+                source.battleDamageMultiplier,
+                1,
+                0.1,
+                100
+            ),
+
         speed:
             numberValue(
                 source.speed,

@@ -36,9 +36,12 @@ module.exports = {
         pointsPerRadius: 4,
         maxRadius: 0,
 
-gameMode: 'classic',
-battleDamage: 1,
-battleRespawn: false,
+        gameMode: 'classic',
+        battleDamage: 1,
+        battleRespawn: false,
+        
+        battleScaledDamage: false,
+        battleDamageMultiplier: 1,
 
         speed: 1,
 

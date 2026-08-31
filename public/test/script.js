@@ -73,6 +73,20 @@ const battleRespawnField =
     battleRespawnInput
         ?.closest('.field');
 
+const battleScaledDamageInput =
+    form.elements.battleScaledDamage;
+
+const battleScaledDamageField =
+    battleScaledDamageInput
+        ?.closest('.field');
+
+const battleDamageMultiplierInput =
+    form.elements.battleDamageMultiplier;
+
+const battleDamageMultiplierField =
+    battleDamageMultiplierInput
+        ?.closest('.field');
+
 const statStatus =
     document.querySelector(
         '#stat-status'
@@ -122,6 +136,8 @@ const settingsKeys = [
     'gameMode',
     'battleDamage',
     'battleRespawn',
+    'battleScaledDamage',
+    'battleDamageMultiplier',
     'speed',
 
 
@@ -186,6 +202,20 @@ function updateGameModeFields() {
         battleDamageField
     ) {
         battleDamageField.hidden =
+            !isBattle;
+    }
+
+    if (
+        battleScaledDamageField
+    ) {
+        battleScaledDamageField.hidden =
+            !isBattle;
+    }
+
+    if (
+        battleDamageMultiplierField
+    ) {
+        battleDamageMultiplierField.hidden =
             !isBattle;
     }
 
