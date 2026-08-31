@@ -63,11 +63,16 @@
     "username": "jugador1",
     "nickname": "jugador1",
     "nameColor": {
-      "type": "rainbow",
-      "color1": null,
+      "type": "solid",
+      "color1": "#ff0000",
       "color2": null
     },
-    "updatedAt": 1788208272348
+    "updatedAt": 1788209186927,
+    "ballColor": {
+      "type": "solid",
+      "color1": "#ff0000",
+      "color2": null
+    }
   },
   "jugador11": {
     "id": "jugador11",

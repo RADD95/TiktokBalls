@@ -582,6 +582,17 @@ function add(
             event.avatar;
     }
 
+const playerColor = getPlayerColor(playerId);
+if (playerColor?.nameColor) {
+    player.customColor = playerColor.nameColor;
+} else if (playerColor?.color1) {
+    // Legacy
+    player.customColor = {
+        type: playerColor.type || 'solid',
+        color1: playerColor.color1,
+        color2: playerColor.color2 || null
+    };
+}
 
     const message =
         getMessageFromEvent(
