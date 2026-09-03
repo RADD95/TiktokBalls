@@ -323,6 +323,7 @@ function getPlayerGradient(
             player
         );
 
+
     if (
         config.type ===
         'rainbow'
@@ -334,6 +335,7 @@ function getPlayerGradient(
                 x + width,
                 y + height
             );
+
 
         for (
             let index = 0;
@@ -349,8 +351,10 @@ function getPlayerGradient(
             );
         }
 
+
         return gradient;
     }
+
 
     if (
         config.type === 'gradient' &&
@@ -365,18 +369,54 @@ function getPlayerGradient(
                 y + height
             );
 
+
         gradient.addColorStop(
             0,
             config.color1
         );
+
 
         gradient.addColorStop(
             1,
             config.color2
         );
 
+
         return gradient;
     }
+
+
+    if (
+        config.type === 'animated' &&
+        config.color1 &&
+        config.color2
+    ) {
+        const time = Date.now() / 20;
+
+        const r1 = parseInt(config.color1.slice(1, 3), 16);
+        const g1 = parseInt(config.color1.slice(3, 5), 16);
+        const b1 = parseInt(config.color1.slice(5, 7), 16);
+
+        const r2 = parseInt(config.color2.slice(1, 3), 16);
+        const g2 = parseInt(config.color2.slice(3, 5), 16);
+        const b2 = parseInt(config.color2.slice(5, 7), 16);
+
+        const gradient = context.createLinearGradient(x, y, x + width, y + height);
+
+        for (let index = 0; index <= 6; index += 1) {
+            const position = index / 6;
+            const shift = (time + index * 60) % 360;
+
+            const r = Math.round(r1 + (r2 - r1) * (Math.sin(shift * Math.PI / 180) + 1) / 2);
+            const g = Math.round(g1 + (g2 - g1) * (Math.sin(shift * Math.PI / 180) + 1) / 2);
+            const b = Math.round(b1 + (b2 - b1) * (Math.sin(shift * Math.PI / 180) + 1) / 2);
+
+            gradient.addColorStop(position, `rgb(${r}, ${g}, ${b})`);
+        }
+
+        return gradient;
+    }
+
 
     return config.color1;
 }

@@ -105,13 +105,16 @@ function drawPlayerName(player, x, y, maxWidth) {
     const font = getFont(fontSize, fontWeight, fontFamily);
     const name = getDisplayName(player);
 
+
     context.save();
     context.font = font;
     context.textAlign = 'left';
     context.textBaseline = 'middle';
 
+
     const textMetrics = context.measureText(name);
     const textWidth = Math.max(textMetrics.width, 1);
+
 
     if (config.type === 'rainbow') {
         const time = Date.now() / 20;
@@ -126,9 +129,35 @@ function drawPlayerName(player, x, y, maxWidth) {
         gradient.addColorStop(0, config.color1);
         gradient.addColorStop(1, config.color2);
         context.fillStyle = gradient;
+    } else if (config.type === 'animated' && config.color1 && config.color2) {
+        const time = Date.now() / 20;
+
+        const r1 = parseInt(config.color1.slice(1, 3), 16);
+        const g1 = parseInt(config.color1.slice(3, 5), 16);
+        const b1 = parseInt(config.color1.slice(5, 7), 16);
+
+        const r2 = parseInt(config.color2.slice(1, 3), 16);
+        const g2 = parseInt(config.color2.slice(3, 5), 16);
+        const b2 = parseInt(config.color2.slice(5, 7), 16);
+
+        const gradient = context.createLinearGradient(x, y, x + textWidth, y);
+
+        for (let index = 0; index <= 6; index += 1) {
+            const position = index / 6;
+            const shift = (time + index * 60) % 360;
+
+            const r = Math.round(r1 + (r2 - r1) * (Math.sin(shift * Math.PI / 180) + 1) / 2);
+            const g = Math.round(g1 + (g2 - g1) * (Math.sin(shift * Math.PI / 180) + 1) / 2);
+            const b = Math.round(b1 + (b2 - b1) * (Math.sin(shift * Math.PI / 180) + 1) / 2);
+
+            gradient.addColorStop(position, `rgb(${r}, ${g}, ${b})`);
+        }
+
+        context.fillStyle = gradient;
     } else {
         context.fillStyle = config.color1 || '#ffffff';
     }
+
 
     context.fillText(name, x, y);
     context.restore();

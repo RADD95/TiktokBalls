@@ -38,7 +38,7 @@
       "color1": "#00ffff",
       "color2": "#ff00ff"
     },
-    "updatedAt": 1787965784615,
+    "updatedAt": 1788220103578,
     "nameColor": {
       "type": "gradient",
       "color1": "#00ffff",
@@ -63,11 +63,11 @@
     "username": "jugador1",
     "nickname": "jugador1",
     "nameColor": {
-      "type": "solid",
+      "type": "gradient",
       "color1": "#ff0000",
-      "color2": null
+      "color2": "#ffd700"
     },
-    "updatedAt": 1788209186927,
+    "updatedAt": 1788223939511,
     "ballColor": {
       "type": "solid",
       "color1": "#ff0000",
