@@ -34,7 +34,14 @@ module.exports = {
 
         baseRadius: 24,
         pointsPerRadius: 4,
-        maxRadius: 180,
+        maxRadius: 0,
+
+        gameMode: 'classic',
+        battleDamage: 1,
+        battleRespawn: false,
+        
+        battleScaledDamage: false,
+        battleDamageMultiplier: 1,
 
         speed: 1,
 
@@ -56,6 +63,26 @@ module.exports = {
         nameFontSize: 14,
         nameFontWeight: '700',
         nameTextColor: '#ffffff',
-        nameTextShadow: true
+        nameTextShadow: true,
+
+
+        rankingLimit: 10,
+        rankingFontFamily: 'Verdana',
+        rankingFontSize: 26,
+        rankingFontWeight: '700',
+        rankingTextColor: '#ffffff',
+        rankingTitleColor: '#5ee7ff',
+        rankingPointsColor: '#ffe66d',
+        rankingTitleSize: 32,
+
+
+        podiumLimit: 10,
+        podiumFontFamily: 'Verdana',
+        podiumFontSize: 26,
+        podiumFontWeight: '700',
+        podiumTextColor: '#ffffff',
+        podiumTitleColor: '#ffe66d',
+        podiumWinsColor: '#ffe66d',
+        podiumTitleSize: 32
     }
 };

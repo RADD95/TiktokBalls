@@ -2,6 +2,10 @@ const {
     get
 } = require('./settings');
 
+const {
+    processColorCommand
+} = require('./player-colors');
+
 const usage = new Map();
 
 function key(event) {
@@ -110,6 +114,9 @@ function getEventConfig(event, settings) {
 function points(event) {
     const settings = get();
     const playerKey = key(event);
+    if (event.type === 'comment') {
+        processColorCommand(event);
+    }
     const now = Date.now();
 
     const limit = Math.max(

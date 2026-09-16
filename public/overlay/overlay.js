@@ -25,14 +25,19 @@ const context =
         }
     );
 
-const canvasWidth = 800;
-const canvasHeight = 600;
+let canvasWidth = 800;
+let canvasHeight = 600;
 
 const balls =
     new Map();
 
 const avatarImages =
     new Map();
+
+const defeatParticles = [];
+
+const DEFEAT_DURATION =
+    650;
 
 const defaultSettings = {
     showNames: true,
@@ -51,7 +56,25 @@ const defaultSettings = {
     chatFontSize: 16,
     chatFontWeight: '400',
     chatTextColor: '#ffffff',
-    chatTextShadow: true
+    chatTextShadow: true,
+
+    rankingLimit: 5,
+    rankingFontFamily: 'Arial',
+    rankingFontSize: 14,
+    rankingFontWeight: '700',
+    rankingTextColor: '#ffffff',
+    rankingTitleColor: '#5ee7ff',
+    rankingPointsColor: '#ffe66d',
+    rankingTitleSize: 14,
+
+    podiumLimit: 5,
+    podiumFontFamily: 'Arial',
+    podiumFontSize: 14,
+    podiumFontWeight: '700',
+    podiumTextColor: '#ffffff',
+    podiumTitleColor: '#ffe66d',
+    podiumWinsColor: '#ffe66d',
+    podiumTitleSize: 14
 };
 
 let settings = {
@@ -61,6 +84,8 @@ let settings = {
 let gameState = null;
 let lastFrameTime =
     performance.now();
+
+let pendingCanvasResize = null;
 
 const podium =
     document.createElement(
@@ -112,7 +137,43 @@ const winnerWins =
         '.winner-wins'
     );
 
-function resizeCanvas() {
+function resizeCanvas(
+    width = canvasWidth,
+    height = canvasHeight
+) {
+    const nextWidth =
+        Math.max(
+            320,
+            Math.min(
+                1920,
+                Number(width) || 800
+            )
+        );
+
+    const nextHeight =
+        Math.max(
+            240,
+            Math.min(
+                1920,
+                Number(height) || 600
+            )
+        );
+
+    if (
+        nextWidth === canvasWidth &&
+        nextHeight === canvasHeight &&
+        canvas.width === nextWidth &&
+        canvas.height === nextHeight
+    ) {
+        return;
+    }
+
+    canvasWidth =
+        nextWidth;
+
+    canvasHeight =
+        nextHeight;
+
     canvas.width =
         canvasWidth;
 
@@ -123,6 +184,12 @@ function resizeCanvas() {
         `${canvasWidth}px`;
 
     canvas.style.height =
+        `${canvasHeight}px`;
+
+    arena.style.width =
+        `${canvasWidth}px`;
+
+    arena.style.height =
         `${canvasHeight}px`;
 
     context.setTransform(
@@ -136,6 +203,52 @@ function resizeCanvas() {
 
     context.imageSmoothingEnabled =
         true;
+
+    normalizeAllBalls();
+    drawFrame();
+}
+
+function normalizeAllBalls() {
+    for (
+        const ball of balls.values()
+    ) {
+        const player =
+            ball.player;
+
+        const currentX =
+            Number(
+                player.x
+            );
+
+        const currentY =
+            Number(
+                player.y
+            );
+
+        if (
+            Number.isFinite(currentX)
+        ) {
+            ball.displayX =
+                currentX > 1
+                    ? currentX / canvasWidth
+                    : currentX;
+
+            ball.targetX =
+                ball.displayX;
+        }
+
+        if (
+            Number.isFinite(currentY)
+        ) {
+            ball.displayY =
+                currentY > 1
+                    ? currentY / canvasHeight
+                    : currentY;
+
+            ball.targetY =
+                ball.displayY;
+        }
+    }
 }
 
 function getDisplayName(player) {
@@ -145,6 +258,151 @@ function getDisplayName(player) {
         player.uniqueId ||
         'viewer'
     );
+}
+
+function getPlayerColorConfig(player) {
+    const customColor = player?.customColor;
+    const defaultColor = settings.nameTextColor || '#ffffff';
+
+    if (!customColor || typeof customColor !== 'object') {
+        return {
+            type: 'solid',
+            colors: [defaultColor],
+            color1: defaultColor,
+            color2: null
+        };
+    }
+
+    let colors = [];
+    if (Array.isArray(customColor.colors) && customColor.colors.length > 0) {
+        colors = customColor.colors;
+    } else {
+        if (customColor.color1) colors.push(customColor.color1);
+        if (customColor.color2) colors.push(customColor.color2);
+    }
+
+    if (colors.length === 0) {
+        colors = [defaultColor];
+    }
+
+    return {
+        type: customColor.type || 'solid',
+        colors: colors,
+        color1: colors[0] || defaultColor,
+        color2: colors[1] || null
+    };
+}
+
+function getPlayerColor(player) {
+    const config = getPlayerColorConfig(player);
+
+    if (config.type === 'rainbow') {
+        return `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
+    }
+
+    if (config.type === 'animated' && config.colors.length >= 2) {
+        // Devuelve el color interpolado actual en tiempo real
+        const count = config.colors.length;
+        const speedFactor = 5000 * count;
+        const progress = ((Date.now() % speedFactor) / speedFactor) * count;
+
+        const idx1 = Math.floor(progress) % count;
+        const idx2 = (idx1 + 1) % count;
+        const factor = progress - Math.floor(progress);
+
+        const c1 = parseHexColor(config.colors[idx1]);
+        const c2 = parseHexColor(config.colors[idx2]);
+
+        const r = Math.round(c1.r + (c2.r - c1.r) * factor);
+        const g = Math.round(c1.g + (c2.g - c1.g) * factor);
+        const b = Math.round(c1.b + (c2.b - c1.b) * factor);
+
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    const firstColor = config.colors[0] || config.color1 || '#ffffff';
+    return firstColor.startsWith('#') ? firstColor : `#${firstColor}`;
+}
+
+// Asegúrate de tener esta función arriba o en tu utils
+function parseHexColor(color) {
+    if (!color) return { r: 255, g: 255, b: 255 };
+    const hex = color.replace('#', '').slice(0, 6);
+    return {
+        r: parseInt(hex.slice(0, 2), 16) || 0,
+        g: parseInt(hex.slice(2, 4), 16) || 0,
+        b: parseInt(hex.slice(4, 6), 16) || 0
+    };
+}
+
+function getPlayerGradient(player, x, y, width, height) {
+    const config = getPlayerColorConfig(player);
+
+    if (config.type === 'rainbow') {
+        const gradient = context.createLinearGradient(x, y, x + width, y + height);
+        const time = Date.now() / 20;
+
+        for (let index = 0; index <= 6; index += 1) {
+            gradient.addColorStop(
+                index / 6,
+                `hsl(${(time + index * 60) % 360}, 100%, 50%)`
+            );
+        }
+
+        return gradient;
+    }
+
+    // Adaptado para trabajar con config.colors o fallback a color1/color2
+    const colors = config.colors || [config.color1, config.color2].filter(Boolean);
+
+    if (config.type === 'gradient' && colors.length >= 2) {
+        const gradient = context.createLinearGradient(x, y, x + width, y + height);
+        const lastIndex = colors.length - 1;
+
+        colors.forEach((col, idx) => {
+            const hex = col.startsWith('#') ? col : `#${col}`;
+            gradient.addColorStop(idx / lastIndex, hex);
+        });
+
+        return gradient;
+    }
+
+    if (config.type === 'animated' && colors.length >= 2) {
+        const count = colors.length;
+        
+        // 5000ms por color para mantener la velocidad visual constante
+        const speedFactor = 1000 * count;
+        const timeOffset = (Date.now() % speedFactor) / speedFactor;
+
+        const gradient = context.createLinearGradient(x, y, x + width, y + height);
+        const steps = 8;
+
+        for (let i = 0; i <= steps; i++) {
+            const pos = i / steps;
+
+            const rawProgress = pos + timeOffset;
+            const progress = (rawProgress - Math.floor(rawProgress)) * count;
+
+            const idx1 = Math.floor(progress) % count;
+            const idx2 = (idx1 + 1) % count;
+            const factor = progress - Math.floor(progress);
+
+            const c1 = parseHexColor(colors[idx1]);
+            const c2 = parseHexColor(colors[idx2]);
+
+            const r = Math.round(c1.r + (c2.r - c1.r) * factor);
+            const g = Math.round(c1.g + (c2.g - c1.g) * factor);
+            const b = Math.round(c1.b + (c2.b - c1.b) * factor);
+
+            gradient.addColorStop(pos, `rgb(${r}, ${g}, ${b})`);
+        }
+
+        return gradient;
+    }
+
+    // Color sólido por defecto
+    const fallbackColor = colors[0] || config.color1 || '#ffffff';
+    return fallbackColor.startsWith('#') ? fallbackColor : `#${fallbackColor}`;
 }
 
 function getAvatar(url) {
@@ -187,7 +445,10 @@ function getAvatar(url) {
     return image;
 }
 
-function normalizePosition(value) {
+function normalizePosition(
+    value,
+    dimension
+) {
     const parsed =
         Number(value);
 
@@ -198,7 +459,7 @@ function normalizePosition(value) {
     }
 
     if (parsed > 1) {
-        return parsed / canvasWidth;
+        return parsed / dimension;
     }
 
     return parsed;
@@ -210,18 +471,22 @@ function normalizePlayer(player) {
 
         x:
             normalizePosition(
-                player.x
+                player.x,
+                canvasWidth
             ),
 
         y:
             normalizePosition(
-                player.y
+                player.y,
+                canvasHeight
             ),
 
         radius:
-            Number(
-                player.radius
-            ) || 24,
+            Number.isFinite(
+                Number(player.radius)
+            )
+                ? Number(player.radius)
+                : 24,
 
         points:
             Number(
@@ -261,7 +526,9 @@ function createBall(player) {
             ) + 8000 || 0,
 
         effectUntil: 0,
-        alive: true
+        alive: true,
+        defeatStartedAt: 0,
+        defeatParticlesCreated: false
     };
 
     balls.set(
@@ -290,6 +557,35 @@ function updateBall(player) {
         );
     }
 
+    const wasDefeated =
+        ball.player.status ===
+        'defeated';
+
+    const becomesDefeated =
+        settings.gameMode ===
+        'battle' &&
+        normalized.status ===
+        'defeated' &&
+        !wasDefeated;
+
+if (
+    becomesDefeated
+) {
+    ball.defeatStartedAt =
+        performance.now();
+
+    ball.defeatRadius =
+        Number(
+            ball.player.radius
+        ) || 24;
+
+    ball.defeatParticlesCreated =
+        false;
+
+    ball.alive =
+        true;
+}
+
     ball.player = {
         ...ball.player,
         ...normalized
@@ -317,15 +613,158 @@ function updateBall(player) {
     return ball;
 }
 
+function startBattleDefeat(
+    defeatedPlayer
+) {
+    if (
+        !defeatedPlayer ||
+        !defeatedPlayer.id
+    ) {
+        return;
+    }
+
+
+    const id =
+        String(
+            defeatedPlayer.id
+        );
+
+
+    const normalized =
+        normalizePlayer(
+            defeatedPlayer
+        );
+
+
+    let ball =
+        balls.get(
+            id
+        );
+
+
+    if (
+        !ball
+    ) {
+        ball =
+            createBall(
+                normalized
+            );
+    }
+
+
+    /*
+     * Conserva la posición que la bolita tenía
+     * justo antes de ser eliminada. Si el backend
+     * envía la posición, se actualiza; si no, se
+     * usa la última posición visible local.
+     */
+    const currentX =
+        Number(
+            normalized.x
+        );
+
+
+    const currentY =
+        Number(
+            normalized.y
+        );
+
+
+    if (
+        Number.isFinite(
+            currentX
+        )
+    ) {
+        ball.targetX =
+            currentX;
+
+
+        ball.displayX =
+            currentX;
+    }
+
+
+    if (
+        Number.isFinite(
+            currentY
+        )
+    ) {
+        ball.targetY =
+            currentY;
+
+
+        ball.displayY =
+            currentY;
+    }
+
+
+    ball.player = {
+        ...ball.player,
+        ...normalized,
+
+        status:
+            'defeated',
+
+        points:
+            0
+    };
+
+
+    ball.defeatStartedAt =
+        performance.now();
+
+
+    ball.defeatRadius =
+        Math.max(
+            24,
+            Number(
+                defeatedPlayer.previousRadius
+            ) ||
+            Number(
+                ball.player.radius
+            ) ||
+            24
+        );
+
+
+    ball.defeatParticlesCreated =
+        false;
+
+
+    ball.alive =
+        true;
+}
+
 function renderState(state) {
     if (!state) {
         return;
     }
 
-    settings = {
+    const nextSettings = {
         ...defaultSettings,
         ...(state.settings || {})
     };
+
+    const nextWidth =
+        Number(nextSettings.width);
+
+    const nextHeight =
+        Number(nextSettings.height);
+
+    if (
+        Number.isFinite(nextWidth) &&
+        Number.isFinite(nextHeight) &&
+        nextWidth > 0 &&
+        nextHeight > 0
+    ) {
+        resizeCanvas(
+            nextWidth,
+            nextHeight
+        );
+    }
+
+    settings =
+        nextSettings;
 
     gameState =
         state.game || state;
@@ -335,6 +774,17 @@ function renderState(state) {
         gameState.players ||
         [];
 
+        const visiblePlayers =
+    players.filter(
+        player =>
+            !(
+                settings.gameMode ===
+                    'battle' &&
+                player.status ===
+                    'defeated'
+            )
+    );
+
     const activeIds =
         new Set(
             players.map(
@@ -343,23 +793,34 @@ function renderState(state) {
             )
         );
 
-    for (
-        const id of balls.keys()
+for (
+    const id of balls.keys()
+) {
+    if (
+        !activeIds.has(id)
     ) {
+        const ball =
+            balls.get(id);
+
         if (
-            !activeIds.has(id)
+            ball?.player.status ===
+            'defeated' &&
+            ball.alive
         ) {
-            balls.delete(id);
+            continue;
         }
+
+        balls.delete(id);
     }
+}
 
     players.forEach(
         updateBall
     );
 
-    renderLeaderboard(
-        players
-    );
+renderLeaderboard(
+    visiblePlayers
+);
 
     renderPodium(
         gameState.podium || []
@@ -472,6 +933,50 @@ function renderLeaderboard(players) {
         'hidden'
     );
 
+    leaderboard.style.setProperty(
+        '--ranking-font-family',
+        settings.rankingFontFamily ||
+        'Arial'
+    );
+
+    leaderboard.style.setProperty(
+        '--ranking-font-size',
+        `${Number(
+            settings.rankingFontSize
+        ) || 14}px`
+    );
+
+    leaderboard.style.setProperty(
+        '--ranking-font-weight',
+        settings.rankingFontWeight ||
+        '700'
+    );
+
+    leaderboard.style.setProperty(
+        '--ranking-text-color',
+        settings.rankingTextColor ||
+        '#ffffff'
+    );
+
+    leaderboard.style.setProperty(
+        '--ranking-title-color',
+        settings.rankingTitleColor ||
+        '#5ee7ff'
+    );
+
+    leaderboard.style.setProperty(
+        '--ranking-points-color',
+        settings.rankingPointsColor ||
+        '#ffe66d'
+    );
+
+    leaderboard.style.setProperty(
+        '--ranking-title-size',
+        `${Number(
+            settings.rankingTitleSize
+        ) || 14}px`
+    );
+
     const title =
         document.createElement(
             'strong'
@@ -480,9 +985,21 @@ function renderLeaderboard(players) {
     title.textContent =
         'Ranking';
 
+
+
     leaderboard.appendChild(
         title
     );
+
+    const limit =
+        Math.max(
+            1,
+            Math.floor(
+                Number(
+                    settings.rankingLimit
+                ) || 5
+            )
+        );
 
     const sortedPlayers =
         [...players]
@@ -495,7 +1012,10 @@ function renderLeaderboard(players) {
                         first.points || 0
                     )
             )
-            .slice(0, 5);
+            .slice(
+                0,
+                limit
+            );
 
     sortedPlayers.forEach(
         (player, index) => {
@@ -516,6 +1036,33 @@ function renderLeaderboard(players) {
                 `${index + 1}. ` +
                 getDisplayName(player);
 
+            const colorConfig =
+                getPlayerColorConfig(
+                    player
+                );
+
+            if (
+                colorConfig.type ===
+                'rainbow'
+            ) {
+                name.style.backgroundImage =
+                    'linear-gradient(' +
+                    '90deg, red, orange, ' +
+                    'yellow, green, blue, ' +
+                    'violet)';
+
+                name.style.webkitBackgroundClip =
+                    'text';
+
+                name.style.webkitTextFillColor =
+                    'transparent';
+            } else {
+                name.style.color =
+                    colorConfig.color2
+                        ? colorConfig.color1
+                        : colorConfig.color1;
+            }
+
             const points =
                 document.createElement(
                     'span'
@@ -527,6 +1074,10 @@ function renderLeaderboard(players) {
                         player.points || 0
                     )
                 );
+
+            points.style.color =
+                settings.rankingPointsColor ||
+                '#ffe66d';
 
             row.appendChild(
                 name
@@ -561,6 +1112,50 @@ function renderPodium(players) {
         'hidden'
     );
 
+    podium.style.setProperty(
+        '--podium-font-family',
+        settings.podiumFontFamily ||
+        'Arial'
+    );
+
+    podium.style.setProperty(
+        '--podium-font-size',
+        `${Number(
+            settings.podiumFontSize
+        ) || 14}px`
+    );
+
+    podium.style.setProperty(
+        '--podium-font-weight',
+        settings.podiumFontWeight ||
+        '700'
+    );
+
+    podium.style.setProperty(
+        '--podium-text-color',
+        settings.podiumTextColor ||
+        '#ffffff'
+    );
+
+    podium.style.setProperty(
+        '--podium-title-color',
+        settings.podiumTitleColor ||
+        '#ffe66d'
+    );
+
+    podium.style.setProperty(
+        '--podium-wins-color',
+        settings.podiumWinsColor ||
+        '#ffe66d'
+    );
+
+    podium.style.setProperty(
+        '--podium-title-size',
+        `${Number(
+            settings.podiumTitleSize
+        ) || 14}px`
+    );
+
     const title =
         document.createElement(
             'strong'
@@ -568,6 +1163,7 @@ function renderPodium(players) {
 
     title.textContent =
         '🏆 Podio histórico';
+
 
     podium.appendChild(
         title
@@ -595,8 +1191,21 @@ function renderPodium(players) {
         return;
     }
 
+    const limit =
+        Math.max(
+            1,
+            Math.floor(
+                Number(
+                    settings.podiumLimit
+                ) || 5
+            )
+        );
+
     players
-        .slice(0, 5)
+        .slice(
+            0,
+            limit
+        )
         .forEach(
             (player, index) => {
                 const row =
@@ -615,6 +1224,10 @@ function renderPodium(players) {
                 position.textContent =
                     `${index + 1}.`;
 
+                position.style.color =
+                    settings.podiumWinsColor ||
+                    '#ffe66d';
+
                 const name =
                     document.createElement(
                         'span'
@@ -625,6 +1238,31 @@ function renderPodium(players) {
                         player
                     );
 
+                const colorConfig =
+                    getPlayerColorConfig(
+                        player
+                    );
+
+                if (
+                    colorConfig.type ===
+                    'rainbow'
+                ) {
+                    name.style.backgroundImage =
+                        'linear-gradient(' +
+                        '90deg, red, orange, ' +
+                        'yellow, green, blue, ' +
+                        'violet)';
+
+                    name.style.webkitBackgroundClip =
+                        'text';
+
+                    name.style.webkitTextFillColor =
+                        'transparent';
+                } else {
+                    name.style.color =
+                        colorConfig.color1;
+                }
+
                 const wins =
                     document.createElement(
                         'span'
@@ -632,6 +1270,10 @@ function renderPodium(players) {
 
                 wins.textContent =
                     `${player.wins || 0} 🏆`;
+
+                wins.style.color =
+                    settings.podiumWinsColor ||
+                    '#ffe66d';
 
                 row.appendChild(
                     position
@@ -1059,9 +1701,26 @@ function drawPlayerName(
         'rgba(0, 0, 0, 0.72)'
     );
 
-    context.fillStyle =
-        settings.nameTextColor ||
-        '#ffffff';
+    const nameColor =
+        player?.customColor;
+
+    if (
+        nameColor &&
+        typeof nameColor === 'object'
+    ) {
+        context.fillStyle =
+            getPlayerGradient(
+                player,
+                x - boxWidth / 2,
+                boxY,
+                boxWidth,
+                boxHeight
+            );
+    } else {
+        context.fillStyle =
+            settings.nameTextColor ||
+            '#ffffff';
+    }
 
     context.fillText(
         safeText,
@@ -1200,6 +1859,270 @@ function drawPlayerMessage(
     context.restore();
 }
 
+function createDefeatParticles(
+    ball,
+    x,
+    y,
+    radius
+) {
+    if (
+        ball.defeatParticlesCreated
+    ) {
+        return;
+    }
+
+    ball.defeatParticlesCreated =
+        true;
+
+    const color =
+        ball.player.color ||
+        '#5ee7ff';
+
+    for (
+        let index = 0;
+        index < 14;
+        index += 1
+    ) {
+        const angle =
+            Math.random() *
+            Math.PI *
+            2;
+
+        const speed =
+            70 +
+            Math.random() * 130;
+
+        defeatParticles.push({
+            x,
+            y,
+            vx:
+                Math.cos(angle) *
+                speed,
+
+            vy:
+                Math.sin(angle) *
+                speed,
+
+            radius:
+                2 +
+                Math.random() * 4,
+
+            color,
+            startedAt:
+                performance.now(),
+
+            duration:
+                450 +
+                Math.random() * 200
+        });
+    }
+}
+
+function drawDefeatParticles() {
+    const now =
+        performance.now();
+
+    for (
+        let index =
+            defeatParticles.length - 1;
+        index >= 0;
+        index -= 1
+    ) {
+        const particle =
+            defeatParticles[index];
+
+        const progress =
+            Math.min(
+                1,
+                (
+                    now -
+                    particle.startedAt
+                ) /
+                particle.duration
+            );
+
+        if (
+            progress >= 1
+        ) {
+            defeatParticles.splice(
+                index,
+                1
+            );
+
+            continue;
+        }
+
+        const seconds =
+            1 / 60;
+
+        particle.x +=
+            particle.vx *
+            seconds;
+
+        particle.y +=
+            particle.vy *
+            seconds;
+
+        particle.vy +=
+            120 *
+            seconds;
+
+        context.save();
+
+        context.globalAlpha =
+            1 - progress;
+
+        drawCircle(
+            particle.x,
+            particle.y,
+            particle.radius *
+            (
+                1 - progress
+            ),
+            particle.color
+        );
+
+        context.restore();
+    }
+}
+
+function drawDefeatedPlayer(
+    ball
+) {
+    const player =
+        ball.player;
+
+    const x =
+        Math.round(
+            ball.displayX *
+            canvasWidth
+        );
+
+    const y =
+        Math.round(
+            ball.displayY *
+            canvasHeight
+        );
+
+const originalRadius =
+    Math.max(
+        24,
+        Number(
+            ball.defeatRadius
+        ) || 24
+    );
+
+    const elapsed =
+        performance.now() -
+        ball.defeatStartedAt;
+
+    const progress =
+        Math.min(
+            1,
+            elapsed /
+            DEFEAT_DURATION
+        );
+
+    if (
+        progress >= 1
+    ) {
+        ball.alive =
+            false;
+
+        return;
+    }
+
+    if (
+        !ball.defeatParticlesCreated
+    ) {
+        createDefeatParticles(
+            ball,
+            x,
+            y,
+            originalRadius
+        );
+    }
+
+    const popProgress =
+        Math.min(
+            1,
+            progress / 0.18
+        );
+
+    const shrinkProgress =
+        Math.max(
+            0,
+            (
+                progress - 0.18
+            ) /
+            0.82
+        );
+
+    const popScale =
+        1 +
+        Math.sin(
+            popProgress *
+            Math.PI
+        ) *
+        0.18;
+
+    const scale =
+        popScale *
+        (
+            1 -
+            shrinkProgress
+        );
+
+    const radius =
+        Math.max(
+            1,
+            originalRadius *
+            scale
+        );
+
+    context.save();
+
+    context.globalAlpha =
+        1 - progress;
+
+    drawGlow(
+        x,
+        y,
+        radius,
+        player.color ||
+        '#5ee7ff',
+        true
+    );
+
+    drawCircle(
+        x,
+        y,
+        radius,
+        player.color ||
+        '#5ee7ff'
+    );
+
+    context.font =
+        '900 24px Arial';
+
+    context.textAlign =
+        'center';
+
+    context.textBaseline =
+        'middle';
+
+    context.fillStyle =
+        '#ff3b3b';
+
+    context.fillText(
+        '💥',
+        x,
+        y
+    );
+
+    context.restore();
+}
+
 function drawPlayer(ball) {
     const player =
         ball.player;
@@ -1223,9 +2146,12 @@ function drawPlayer(ball) {
             ) || 24
         );
 
-    const color =
-        player.color ||
-        '#5ee7ff';
+const ballColorConfig = player.ballColorConfig;
+let color = player.color || '#5ee7ff';
+
+if (ballColorConfig && ballColorConfig.type === 'rainbow') {
+    color = `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
+}
 
     const image =
         getAvatar(
@@ -1307,14 +2233,81 @@ function drawFrame() {
         canvasHeight
     );
 
+
+    const drawableBalls =
+        [
+            ...balls.values()
+        ]
+            .filter(
+                (ball) =>
+                    ball.alive
+            )
+            .sort(
+                (first, second) => {
+                    const firstRadius =
+                        Number(
+                            first.player.radius
+                        ) || 24;
+
+
+                    const secondRadius =
+                        Number(
+                            second.player.radius
+                        ) || 24;
+
+
+                    /*
+                     * Las bolas grandes se dibujan primero,
+                     * en el fondo. Las pequeñas se dibujan
+                     * después, por encima.
+                     */
+                    return (
+                        secondRadius -
+                        firstRadius
+                    );
+                }
+            );
+
+
     for (
-        const ball of balls.values()
+        const ball of drawableBalls
     ) {
         if (
-            ball.alive
+            settings.gameMode ===
+            'battle' &&
+            ball.player.status ===
+            'defeated'
         ) {
-            drawPlayer(
+            drawDefeatedPlayer(
                 ball
+            );
+
+
+            continue;
+        }
+
+
+        drawPlayer(
+            ball
+        );
+    }
+
+
+    /*
+     * Las partículas se dibujan después de todas las bolas,
+     * para que la explosión nunca quede detrás de una gigante.
+     */
+    drawDefeatParticles();
+
+
+    for (
+        const [id, ball] of balls.entries()
+    ) {
+        if (
+            !ball.alive
+        ) {
+            balls.delete(
+                id
             );
         }
     }
@@ -1340,6 +2333,9 @@ function showWinner(winner) {
 
 function resetLocalRound() {
     balls.clear();
+
+defeatParticles.length =
+    0;
 
     winnerBanner.classList.add(
         'hidden'
@@ -1375,6 +2371,26 @@ function animationLoop(currentTime) {
         animationLoop
     );
 }
+
+socket.on(
+    'arena:resize',
+    (size) => {
+        pendingCanvasResize = {
+            width:
+                size.width,
+
+            height:
+                size.height
+        };
+
+        resizeCanvas(
+            pendingCanvasResize.width,
+            pendingCanvasResize.height
+        );
+
+        pendingCanvasResize = null;
+    }
+);
 
 socket.on(
     'state:init',
@@ -1442,6 +2458,46 @@ socket.on(
 );
 
 socket.on(
+    'game:battle-hit',
+    (result) => {
+        const defeatedPlayers =
+            result?.defeated || [];
+
+
+        for (
+            const defeatedPlayer of
+            defeatedPlayers
+        ) {
+            startBattleDefeat(
+                defeatedPlayer
+            );
+        }
+
+
+        if (
+            result?.state
+        ) {
+            renderState(
+                result.state
+            );
+        }
+    }
+);
+
+socket.on(
+    'game:battle-draw',
+    (result) => {
+        if (
+            result?.state
+        ) {
+            renderState(
+                result.state
+            );
+        }
+    }
+);
+
+socket.on(
     'game:win',
     (payload) => {
         if (
@@ -1494,7 +2550,12 @@ resizeCanvas();
 
 window.addEventListener(
     'resize',
-    resizeCanvas
+    () => {
+        resizeCanvas(
+            canvasWidth,
+            canvasHeight
+        );
+    }
 );
 
 requestAnimationFrame(

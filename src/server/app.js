@@ -66,6 +66,7 @@ app.use(
     express.json()
 );
 
+
 app.use(
     express.static(
         path.join(
@@ -85,7 +86,7 @@ function requireOverlayToken(
 
     const headerToken =
         req.headers[
-            'x-overlay-token'
+        'x-overlay-token'
         ];
 
     const receivedToken =
@@ -110,6 +111,9 @@ function getAllowedSettings() {
     return [
         'tiktokUsername',
 
+        'width',
+        'height',
+
         'commentPoints',
         'commentMultiplier',
 
@@ -130,6 +134,11 @@ function getAllowedSettings() {
         'baseRadius',
         'pointsPerRadius',
         'maxRadius',
+        'gameMode',
+        'battleDamage',
+        'battleRespawn',
+        'battleScaledDamage',
+        'battleDamageMultiplier',
         'speed',
 
         'showNames',
@@ -137,6 +146,7 @@ function getAllowedSettings() {
         'showLeaderboard',
         'showPodium',
         'showChat',
+        'transparentBackground',
 
         'nameFontFamily',
         'nameFontSize',
@@ -148,7 +158,25 @@ function getAllowedSettings() {
         'chatFontSize',
         'chatFontWeight',
         'chatTextColor',
-        'chatTextShadow'
+        'chatTextShadow',
+
+        'rankingLimit',
+        'rankingFontFamily',
+        'rankingFontSize',
+        'rankingFontWeight',
+        'rankingTextColor',
+        'rankingTitleColor',
+        'rankingPointsColor',
+        'rankingTitleSize',
+
+        'podiumLimit',
+        'podiumFontFamily',
+        'podiumFontSize',
+        'podiumFontWeight',
+        'podiumTextColor',
+        'podiumTitleColor',
+        'podiumWinsColor',
+        'podiumTitleSize'
     ];
 }
 
@@ -258,10 +286,32 @@ app.put(
                 )
             );
 
+        const previousSettings =
+            settingsStore.get();
+
         const updatedSettings =
             settingsStore.update(
                 settingsToUpdate
             );
+
+        const sizeChanged =
+            Number(previousSettings.width) !==
+            Number(updatedSettings.width) ||
+            Number(previousSettings.height) !==
+            Number(updatedSettings.height);
+
+        if (sizeChanged) {
+            io.emit(
+                'arena:resize',
+                {
+                    width:
+                        updatedSettings.width,
+
+                    height:
+                        updatedSettings.height
+                }
+            );
+        }
 
         realtime.state();
 
@@ -571,7 +621,7 @@ app.post(
 
 app.get(
     '/overlay/',
-    requireOverlayToken,
+    //requireOverlayToken,
     (_req, res) => {
         res.sendFile(
             path.join(
@@ -579,6 +629,37 @@ app.get(
                 'public',
                 'overlay',
                 'index.html'
+            )
+        );
+    }
+);
+
+app.get(
+    '/overlay/ranking',
+    //requireOverlayToken,
+    (_req, res) => {
+        res.sendFile(
+            path.join(
+                process.cwd(),
+                'public',
+                'overlay',
+                'ranking.html'
+            )
+        );
+    }
+);
+
+
+app.get(
+    '/overlay/podium',
+    //requireOverlayToken,
+    (_req, res) => {
+        res.sendFile(
+            path.join(
+                process.cwd(),
+                'public',
+                'overlay',
+                'podium.html'
             )
         );
     }

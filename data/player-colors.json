@@ -1,0 +1,79 @@
+{
+  "7108875095711417349": {
+    "id": "7108875095711417349",
+    "userId": "7108875095711417349",
+    "username": "Andrés",
+    "nickname": "Andrés",
+    "nameColor": {
+      "type": "animated",
+      "color1": "#800080",
+      "color2": "#ff8c00"
+    },
+    "updatedAt": 1788407819789,
+    "ballColor": {
+      "type": "solid",
+      "color1": "#ff0000",
+      "color2": null
+    }
+  },
+  "6775293351258555398": {
+    "id": "6775293351258555398",
+    "userId": "6775293351258555398",
+    "username": "samu",
+    "nickname": "samu",
+    "nameColor": {
+      "type": "solid",
+      "color1": "#ff0000",
+      "color2": null
+    },
+    "updatedAt": 1787972774239
+  },
+  "7622867047802815508": {
+    "id": "7622867047802815508",
+    "userId": "7622867047802815508",
+    "username": "Juanito",
+    "nickname": "Juanito",
+    "nameColor": {
+      "type": "solid",
+      "color1": "#ff0000",
+      "color2": null
+    },
+    "updatedAt": 1787972994512
+  },
+  "6792489734615974917": {
+    "id": "6792489734615974917",
+    "userId": "6792489734615974917",
+    "username": "Isa Gómez 💗",
+    "nickname": "Isa Gómez 💗",
+    "nameColor": {
+      "type": "animated",
+      "color1": "#00ffff",
+      "color2": "#ff1493"
+    },
+    "updatedAt": 1788235552874
+  },
+  "207384029820510208": {
+    "id": "207384029820510208",
+    "userId": "207384029820510208",
+    "username": "≈𝑱𝒖𝒂𝒏≈",
+    "nickname": "≈𝑱𝒖𝒂𝒏≈",
+    "nameColor": {
+      "type": "rainbow",
+      "color1": null,
+      "color2": null
+    },
+    "updatedAt": 1788148636947
+  },
+  "7018021922025915397": {
+    "id": "7018021922025915397",
+    "userId": "7018021922025915397",
+    "username": "HeilynGamer",
+    "nickname": "HeilynGamer",
+    "nameColor": {
+      "type": "rainbow",
+      "color1": null,
+      "color2": null
+    },
+    "updatedAt": 1788410716028
+  }
+}
