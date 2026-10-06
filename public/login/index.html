@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TikTok Balls · Acceso</title>
+    <link rel="stylesheet" href="/login/index.css">
+</head>
+
+<body>
+    <main class="shell">
+        <section class="intro">
+            <span class="eyebrow">TIKTOK BALLS</span>
+            <h1>Tu arena,<br><em>tu comunidad.</em></h1>
+            <p>Administra tu directo, personaliza el overlay y conserva el progreso de tus jugadores desde un solo lugar.</p>
+        </section>
+
+        <section class="auth-panel" aria-label="Acceso a la cuenta">
+            <div class="panel-heading">
+                <span class="mark">●</span>
+                <div>
+                    <strong>Control center</strong>
+                    <span>Accede a tu workspace</span>
+                </div>
+            </div>
+
+            <form id="auth-form" autocomplete="off">
+                <label>
+                    <span>Nombre de usuario</span>
+                    <input name="username" type="text" minlength="3" maxlength="32" required autocomplete="new-password" readonly data-lpignore="true" data-1p-ignore="true">
+                </label>
+
+                <label>
+                    <span>Contraseña</span>
+                    <input name="password" type="password" minlength="8" required autocomplete="new-password" readonly data-lpignore="true" data-1p-ignore="true">
+                </label>
+
+                <button class="submit" type="submit">
+                    Entrar al panel
+                </button>
+                <p id="auth-message" class="message" role="alert"></p>
+            </form>
+        </section>
+    </main>
+    <script src="/login/index.js"></script>
+</body>
+
+</html>

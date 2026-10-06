@@ -1,0 +1,1205 @@
+const overlayToken = new URLSearchParams(window.location.search).get('token');
+const socket = io({
+    auth: { token: overlayToken },
+    query: { token: overlayToken }
+});
+
+const arena = document.querySelector('#arena');
+const leaderboard = document.querySelector('#leaderboard');
+
+const canvas = document.createElement('canvas');
+canvas.id = 'game-canvas';
+arena.appendChild(canvas);
+
+const context = canvas.getContext('2d', {
+    alpha: true,
+    desynchronized: true
+});
+
+let canvasWidth = 800;
+let canvasHeight = 600;
+
+const balls = new Map();
+const avatarImages = new Map();
+const defeatParticles = [];
+
+const DEFEAT_DURATION = 650;
+
+const defaultSettings = {
+    showNames: true,
+    showPoints: true,
+    showLeaderboard: true,
+    showPodium: true,
+    showChat: true,
+
+    nameFontFamily: 'Arial',
+    nameFontSize: 14,
+    nameFontWeight: '700',
+    nameTextColor: '#ffffff',
+    nameTextShadow: true,
+
+    chatFontFamily: 'Arial',
+    chatFontSize: 16,
+    chatFontWeight: '400',
+    chatTextColor: '#ffffff',
+    chatTextShadow: true,
+
+    rankingLimit: 5,
+    rankingFontFamily: 'Arial',
+    rankingFontSize: 14,
+    rankingFontWeight: '700',
+    rankingTextColor: '#ffffff',
+    rankingTitleColor: '#5ee7ff',
+    rankingPointsColor: '#ffe66d',
+    rankingTitleSize: 14,
+
+    podiumLimit: 5,
+    podiumFontFamily: 'Arial',
+    podiumFontSize: 14,
+    podiumFontWeight: '700',
+    podiumTextColor: '#ffffff',
+    podiumTitleColor: '#ffe66d',
+    podiumWinsColor: '#ffe66d',
+    podiumTitleSize: 14
+};
+
+let settings = { ...defaultSettings };
+let gameState = null;
+
+let marblesRoundData = {
+    state: 'LOBBY',
+    timeRemaining: 120,
+    countdownTime: 5,
+    queuedCount: 0
+};
+
+let lastFrameTime = performance.now();
+let pendingCanvasResize = null;
+
+const podium = document.createElement('aside');
+podium.id = 'podium';
+podium.className = 'hidden';
+document.body.appendChild(podium);
+
+const winnerBanner = document.createElement('div');
+winnerBanner.id = 'winner-banner';
+winnerBanner.className = 'hidden';
+winnerBanner.innerHTML = `
+    <div class="winner-title">🏆 GANADOR</div>
+    <div class="winner-name"></div>
+    <div class="winner-wins"></div>
+`;
+const arenaContainer = document.getElementById('arena') || document.body;
+arenaContainer.appendChild(winnerBanner);
+
+const winnerName = winnerBanner.querySelector('.winner-name');
+const winnerWins = winnerBanner.querySelector('.winner-wins');
+
+function resizeCanvas(width = canvasWidth, height = canvasHeight) {
+    const nextWidth = Math.max(320, Math.min(1920, Number(width) || 800));
+    const nextHeight = Math.max(240, Math.min(1920, Number(height) || 600));
+
+    if (
+        nextWidth === canvasWidth &&
+        nextHeight === canvasHeight &&
+        canvas.width === nextWidth &&
+        canvas.height === nextHeight
+    ) {
+        return;
+    }
+
+    canvasWidth = nextWidth;
+    canvasHeight = nextHeight;
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+
+    arena.style.width = `${canvasWidth}px`;
+    arena.style.height = `${canvasHeight}px`;
+
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.imageSmoothingEnabled = true;
+
+    normalizeAllBalls();
+    drawFrame();
+}
+
+function normalizeAllBalls() {
+    for (const ball of balls.values()) {
+        const player = ball.player;
+        const currentX = Number(player.x);
+        const currentY = Number(player.y);
+
+        if (Number.isFinite(currentX)) {
+            ball.displayX = currentX > 1 ? currentX / canvasWidth : currentX;
+            ball.targetX = ball.displayX;
+        }
+
+        if (Number.isFinite(currentY)) {
+            ball.displayY = currentY > 1 ? currentY / canvasHeight : currentY;
+            ball.targetY = ball.displayY;
+        }
+    }
+}
+
+function getDisplayName(player) {
+    return player.nickname || player.username || player.uniqueId || 'viewer';
+}
+
+function getPlayerColorConfig(player) {
+    const customColor = player?.customColor;
+    const defaultColor = settings.nameTextColor || '#ffffff';
+
+    if (!customColor || typeof customColor !== 'object') {
+        return {
+            type: 'solid',
+            colors: [defaultColor],
+            color1: defaultColor,
+            color2: null
+        };
+    }
+
+    let colors = [];
+    if (Array.isArray(customColor.colors) && customColor.colors.length > 0) {
+        colors = customColor.colors;
+    } else {
+        if (customColor.color1) colors.push(customColor.color1);
+        if (customColor.color2) colors.push(customColor.color2);
+    }
+
+    if (colors.length === 0) {
+        colors = [defaultColor];
+    }
+
+    return {
+        type: customColor.type || 'solid',
+        colors: colors,
+        color1: colors[0] || defaultColor,
+        color2: colors[1] || null
+    };
+}
+
+function getPlayerColor(player) {
+    const config = getPlayerColorConfig(player);
+
+    if (config.type === 'rainbow') {
+        return `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
+    }
+
+    if (config.type === 'animated' && config.colors.length >= 2) {
+        const count = config.colors.length;
+        const speedFactor = 2000 * count;
+        const progress = ((Date.now() % speedFactor) / speedFactor) * count;
+
+        const idx1 = Math.floor(progress) % count;
+        const idx2 = (idx1 + 1) % count;
+        const factor = progress - Math.floor(progress);
+
+        const c1 = parseHexColor(config.colors[idx1]);
+        const c2 = parseHexColor(config.colors[idx2]);
+
+        const r = Math.round(c1.r + (c2.r - c1.r) * factor);
+        const g = Math.round(c1.g + (c2.g - c1.g) * factor);
+        const b = Math.round(c1.b + (c2.b - c1.b) * factor);
+
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    const firstColor = config.colors[0] || config.color1 || '#ffffff';
+    return firstColor.startsWith('#') ? firstColor : `#${firstColor}`;
+}
+
+function parseHexColor(color) {
+    if (!color) return { r: 255, g: 255, b: 255 };
+    const hex = color.replace('#', '').slice(0, 6);
+    return {
+        r: parseInt(hex.slice(0, 2), 16) || 0,
+        g: parseInt(hex.slice(2, 4), 16) || 0,
+        b: parseInt(hex.slice(4, 6), 16) || 0
+    };
+}
+
+function getPlayerGradient(player, x, y, width, height) {
+    const config = getPlayerColorConfig(player);
+
+    if (config.type === 'rainbow') {
+        const gradient = context.createLinearGradient(x, y, x + width, y + height);
+        const time = Date.now() / 20;
+
+        for (let index = 0; index <= 6; index += 1) {
+            gradient.addColorStop(
+                index / 6,
+                `hsl(${(time + index * 60) % 360}, 100%, 50%)`
+            );
+        }
+
+        return gradient;
+    }
+
+    const colors = config.colors || [config.color1, config.color2].filter(Boolean);
+
+    if (config.type === 'gradient' && colors.length >= 2) {
+        const gradient = context.createLinearGradient(x, y, x + width, y + height);
+        const lastIndex = colors.length - 1;
+
+        colors.forEach((col, idx) => {
+            const hex = col.startsWith('#') ? col : `#${col}`;
+            gradient.addColorStop(idx / lastIndex, hex);
+        });
+
+        return gradient;
+    }
+
+    if (config.type === 'animated' && colors.length >= 2) {
+        const count = colors.length;
+        const speedFactor = 2000 * count;
+        const timeOffset = (Date.now() % speedFactor) / speedFactor;
+
+        const gradient = context.createLinearGradient(x, y, x + width, y + height);
+        const steps = 8;
+
+        for (let i = 0; i <= steps; i++) {
+            const pos = i / steps;
+            const rawProgress = pos + timeOffset;
+            const progress = (rawProgress - Math.floor(rawProgress)) * count;
+
+            const idx1 = Math.floor(progress) % count;
+            const idx2 = (idx1 + 1) % count;
+            const factor = progress - Math.floor(progress);
+
+            const c1 = parseHexColor(colors[idx1]);
+            const c2 = parseHexColor(colors[idx2]);
+
+            const r = Math.round(c1.r + (c2.r - c1.r) * factor);
+            const g = Math.round(c1.g + (c2.g - c1.g) * factor);
+            const b = Math.round(c1.b + (c2.b - c1.b) * factor);
+
+            gradient.addColorStop(pos, `rgb(${r}, ${g}, ${b})`);
+        }
+
+        return gradient;
+    }
+
+    const fallbackColor = colors[0] || config.color1 || '#ffffff';
+    return fallbackColor.startsWith('#') ? fallbackColor : `#${fallbackColor}`;
+}
+
+function getAvatar(url) {
+    if (!url) return null;
+    if (avatarImages.has(url)) return avatarImages.get(url);
+
+    const image = new Image();
+    image.referrerPolicy = 'no-referrer';
+    image.onload = () => drawFrame();
+    image.onerror = () => avatarImages.delete(url);
+    image.src = url;
+
+    avatarImages.set(url, image);
+    return image;
+}
+
+function normalizePosition(value, dimension) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return 0.5;
+    if (parsed > 1) return parsed / dimension;
+    return parsed;
+}
+
+function normalizePlayer(player) {
+    return {
+        ...player,
+        x: normalizePosition(player.x, canvasWidth),
+        y: normalizePosition(player.y, canvasHeight),
+        radius: Number.isFinite(Number(player.radius)) ? Number(player.radius) : 24,
+        points: Number(player.points) || 0
+    };
+}
+
+function createBall(player) {
+    const normalized = normalizePlayer(player);
+    const ball = {
+        player: normalized,
+        targetX: normalized.x,
+        targetY: normalized.y,
+        displayX: normalized.x,
+        displayY: normalized.y,
+        message: normalized.message || '',
+        messageUntil: Number(normalized.messageUpdatedAt) + 8000 || 0,
+        effectUntil: 0,
+        alive: true,
+        defeatStartedAt: 0,
+        defeatParticlesCreated: false
+    };
+
+    balls.set(String(normalized.id), ball);
+    return ball;
+}
+
+function updateBall(player) {
+    const id = String(player.id);
+    const normalized = normalizePlayer(player);
+
+    let ball = balls.get(id);
+    if (!ball) return createBall(normalized);
+
+    const wasDefeated = ball.player.status === 'defeated';
+    const becomesDefeated =
+        settings.gameMode === 'battle' &&
+        normalized.status === 'defeated' &&
+        !wasDefeated;
+
+    if (becomesDefeated) {
+        ball.defeatStartedAt = performance.now();
+        ball.defeatRadius = Number(ball.player.radius) || 24;
+        ball.defeatParticlesCreated = false;
+        ball.alive = true;
+    }
+
+    ball.player = { ...ball.player, ...normalized };
+    ball.targetX = normalized.x;
+    ball.targetY = normalized.y;
+
+    if (normalized.message && normalized.messageUpdatedAt) {
+        ball.message = normalized.message;
+        ball.messageUntil = Number(normalized.messageUpdatedAt) + 8000;
+    }
+
+    return ball;
+}
+
+function startBattleDefeat(defeatedPlayer) {
+    if (!defeatedPlayer || !defeatedPlayer.id) return;
+
+    const id = String(defeatedPlayer.id);
+    const normalized = normalizePlayer(defeatedPlayer);
+
+    let ball = balls.get(id);
+    if (!ball) ball = createBall(normalized);
+
+    const currentX = Number(normalized.x);
+    const currentY = Number(normalized.y);
+
+    if (Number.isFinite(currentX)) {
+        ball.targetX = currentX;
+        ball.displayX = currentX;
+    }
+
+    if (Number.isFinite(currentY)) {
+        ball.targetY = currentY;
+        ball.displayY = currentY;
+    }
+
+    ball.player = {
+        ...ball.player,
+        ...normalized,
+        status: 'defeated',
+        points: 0
+    };
+
+    ball.defeatStartedAt = performance.now();
+    ball.defeatRadius = Math.max(
+        24,
+        Number(defeatedPlayer.previousRadius) || Number(ball.player.radius) || 24
+    );
+    ball.defeatParticlesCreated = false;
+    ball.alive = true;
+}
+
+function renderState(state) {
+    if (!state) return;
+
+    const nextSettings = {
+        ...defaultSettings,
+        ...(state.settings || {})
+    };
+
+    const nextWidth = Number(nextSettings.width);
+    const nextHeight = Number(nextSettings.height);
+
+    if (
+        Number.isFinite(nextWidth) &&
+        Number.isFinite(nextHeight) &&
+        nextWidth > 0 &&
+        nextHeight > 0
+    ) {
+        resizeCanvas(nextWidth, nextHeight);
+    }
+
+    settings = nextSettings;
+    gameState = state.game || state;
+
+    const players = state.players || gameState.players || [];
+
+    const visiblePlayers = players.filter(
+        (player) => !(settings.gameMode === 'battle' && player.status === 'defeated')
+    );
+
+    const activeIds = new Set(players.map((player) => String(player.id)));
+
+    for (const id of balls.keys()) {
+        if (!activeIds.has(id)) {
+            const ball = balls.get(id);
+            if (ball?.player.status === 'defeated' && ball.alive) continue;
+            balls.delete(id);
+        }
+    }
+
+    players.forEach(updateBall);
+
+    renderLeaderboard(visiblePlayers);
+    renderPodium(gameState.podium || []);
+}
+
+function updateAvatar(event) {
+    if (!event?.userId || !event?.avatar) return;
+    const ball = balls.get(String(event.userId));
+    if (!ball) return;
+
+    ball.player.avatar = event.avatar;
+    getAvatar(event.avatar);
+}
+
+function updateEventMessage(event) {
+    if (!event || !event.userId || settings.showChat === false) return;
+    const ball = balls.get(String(event.userId));
+    if (!ball) return;
+
+    if (event.type === 'comment') {
+        ball.message = event.message || event.comment || '';
+        ball.messageUntil = Date.now() + 8000;
+    }
+
+    if (event.type === 'gift') {
+        const giftName = event.giftName || event.giftname || 'Gift';
+        const repeatCount = event.repeatCount || event.repeatcount || 1;
+        ball.message = `🎁 ${giftName} x${repeatCount}`;
+        ball.messageUntil = Date.now() + 8000;
+    }
+
+    if (event.type === 'comment' || event.type === 'gift') {
+        ball.effectUntil = Date.now() + 700;
+    }
+}
+
+function renderLeaderboard(players) {
+    if (!leaderboard) return;
+    leaderboard.innerHTML = '';
+
+    if (settings.showLeaderboard === false) {
+        leaderboard.classList.add('hidden');
+        return;
+    }
+
+    leaderboard.classList.remove('hidden');
+    leaderboard.style.setProperty('--ranking-font-family', settings.rankingFontFamily || 'Arial');
+    leaderboard.style.setProperty('--ranking-font-size', `${Number(settings.rankingFontSize) || 14}px`);
+    leaderboard.style.setProperty('--ranking-font-weight', settings.rankingFontWeight || '700');
+    leaderboard.style.setProperty('--ranking-text-color', settings.rankingTextColor || '#ffffff');
+    leaderboard.style.setProperty('--ranking-title-color', settings.rankingTitleColor || '#5ee7ff');
+    leaderboard.style.setProperty('--ranking-points-color', settings.rankingPointsColor || '#ffe66d');
+    leaderboard.style.setProperty('--ranking-title-size', `${Number(settings.rankingTitleSize) || 14}px`);
+
+    const title = document.createElement('strong');
+    title.textContent = 'Ranking';
+    leaderboard.appendChild(title);
+
+    const limit = Math.max(1, Math.floor(Number(settings.rankingLimit) || 5));
+    const sortedPlayers = [...players]
+        .sort((first, second) => Number(second.points || 0) - Number(first.points || 0))
+        .slice(0, limit);
+
+    sortedPlayers.forEach((player, index) => {
+        const row = document.createElement('div');
+        row.className = 'row';
+
+        const name = document.createElement('span');
+        name.textContent = `${index + 1}. ` + getDisplayName(player);
+
+        const colorConfig = getPlayerColorConfig(player);
+
+        if (colorConfig.type === 'rainbow') {
+            name.style.backgroundImage = 'linear-gradient(90deg, red, orange, yellow, green, blue, violet)';
+            name.style.webkitBackgroundClip = 'text';
+            name.style.webkitTextFillColor = 'transparent';
+        } else {
+            name.style.color = colorConfig.color1;
+        }
+
+        const points = document.createElement('span');
+        points.textContent = Math.floor(Number(player.points || 0));
+        points.style.color = settings.rankingPointsColor || '#ffe66d';
+
+        row.appendChild(name);
+        row.appendChild(points);
+        leaderboard.appendChild(row);
+    });
+}
+
+function renderPodium(players) {
+    podium.innerHTML = '';
+
+    if (settings.showPodium === false) {
+        podium.classList.add('hidden');
+        return;
+    }
+
+    podium.classList.remove('hidden');
+    podium.style.setProperty('--podium-font-family', settings.podiumFontFamily || 'Arial');
+    podium.style.setProperty('--podium-font-size', `${Number(settings.podiumFontSize) || 14}px`);
+    podium.style.setProperty('--podium-font-weight', settings.podiumFontWeight || '700');
+    podium.style.setProperty('--podium-text-color', settings.podiumTextColor || '#ffffff');
+    podium.style.setProperty('--podium-title-color', settings.podiumTitleColor || '#ffe66d');
+    podium.style.setProperty('--podium-wins-color', settings.podiumWinsColor || '#ffe66d');
+    podium.style.setProperty('--podium-title-size', `${Number(settings.podiumTitleSize) || 14}px`);
+
+    const title = document.createElement('strong');
+    title.textContent = '🏆 Podio histórico';
+    podium.appendChild(title);
+
+    if (!players || !players.length) {
+        const empty = document.createElement('div');
+        empty.className = 'podium-empty';
+        empty.textContent = 'Todavía no hay victorias';
+        podium.appendChild(empty);
+        return;
+    }
+
+    const limit = Math.max(1, Math.floor(Number(settings.podiumLimit) || 5));
+
+    players.slice(0, limit).forEach((player, index) => {
+        const row = document.createElement('div');
+        row.className = 'podium-row';
+
+        const position = document.createElement('span');
+        position.textContent = `${index + 1}.`;
+        position.style.color = settings.podiumWinsColor || '#ffe66d';
+
+        const name = document.createElement('span');
+        name.textContent = getDisplayName(player);
+
+        const colorConfig = getPlayerColorConfig(player);
+
+        if (colorConfig.type === 'rainbow') {
+            name.style.backgroundImage = 'linear-gradient(90deg, red, orange, yellow, green, blue, violet)';
+            name.style.webkitBackgroundClip = 'text';
+            name.style.webkitTextFillColor = 'transparent';
+        } else {
+            name.style.color = colorConfig.color1;
+        }
+
+        const wins = document.createElement('span');
+        wins.textContent = `${player.wins || 0} 🏆`;
+        wins.style.color = settings.podiumWinsColor || '#ffe66d';
+
+        row.appendChild(position);
+        row.appendChild(name);
+        row.appendChild(wins);
+        podium.appendChild(row);
+    });
+}
+
+function getNameFont() {
+    const family = settings.nameFontFamily || 'Arial';
+    const size = Number(settings.nameFontSize) || 14;
+    const weight = settings.nameFontWeight || '700';
+    return `${weight} ${size}px "${family}"`;
+}
+
+function getChatFont() {
+    const family = settings.chatFontFamily || 'Arial';
+    const size = Number(settings.chatFontSize) || 16;
+    const weight = settings.chatFontWeight || '400';
+    return `${weight} ${size}px "${family}"`;
+}
+
+function applyTextShadow(enabled) {
+    if (enabled) {
+        context.shadowColor = '#000000';
+        context.shadowBlur = 5;
+        context.shadowOffsetX = 0;
+        context.shadowOffsetY = 2;
+        return;
+    }
+
+    context.shadowColor = 'transparent';
+    context.shadowBlur = 0;
+    context.shadowOffsetX = 0;
+    context.shadowOffsetY = 0;
+}
+
+function drawCircle(x, y, radius, color) {
+    context.beginPath();
+    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.fillStyle = color;
+    context.fill();
+}
+
+function drawGlow(x, y, radius, color, active) {
+    context.save();
+    context.globalAlpha = active ? 0.3 : 0.16;
+    drawCircle(x, y, radius + (active ? 9 : 5), color);
+    context.restore();
+}
+
+function drawAvatar(image, x, y, radius) {
+    if (!image || !image.complete || image.naturalWidth <= 0) return;
+
+    context.save();
+    context.beginPath();
+    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.clip();
+    context.drawImage(image, x - radius, y - radius, radius * 2, radius * 2);
+    context.restore();
+}
+
+function truncateText(value, maximumWidth) {
+    const text = String(value || '');
+    if (context.measureText(text).width <= maximumWidth) return text;
+
+    let result = '';
+    for (const character of text) {
+        const candidate = `${result}${character}…`;
+        if (context.measureText(candidate).width > maximumWidth) break;
+        result += character;
+    }
+    return `${result}…`;
+}
+
+function wrapText(value, maximumWidth) {
+    const lines = [];
+    let line = '';
+
+    for (const character of String(value || '')) {
+        const candidate = `${line}${character}`;
+        if (line && context.measureText(candidate).width > maximumWidth) {
+            lines.push(line);
+            line = character;
+        } else {
+            line = candidate;
+        }
+    }
+
+    if (line) lines.push(line);
+    return lines.length ? lines : [''];
+}
+
+function drawRoundedRect(x, y, width, height, radius, color) {
+    context.beginPath();
+    if (typeof context.roundRect === 'function') {
+        context.roundRect(x, y, width, height, radius);
+    } else {
+        context.moveTo(x + radius, y);
+        context.lineTo(x + width - radius, y);
+        context.quadraticCurveTo(x + width, y, x + width, y + radius);
+        context.lineTo(x + width, y + height - radius);
+        context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        context.lineTo(x + radius, y + height);
+        context.quadraticCurveTo(x, y + height, x, y + height - radius);
+        context.lineTo(x, y + radius);
+        context.quadraticCurveTo(x, y, x + radius, y);
+    }
+    context.fillStyle = color;
+    context.fill();
+}
+
+// FUNCIONES PARA RENDERIZAR MODO MARBLES (CANICAS)
+function drawMarblesPegs(pegs) {
+    if (!Array.isArray(pegs)) return;
+
+    pegs.forEach((peg) => {
+        const px = Math.round(peg.x * canvasWidth);
+        const py = Math.round(peg.y * canvasHeight);
+        const radius = Number(peg.radius) || 8;
+
+        context.save();
+        context.beginPath();
+        context.arc(px, py, radius, 0, Math.PI * 2);
+
+        // Gradiente metálico para el rebotador
+        const grad = context.createRadialGradient(px - 2, py - 2, 1, px, py, radius);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.5, '#94a3b8');
+        grad.addColorStop(1, '#475569');
+
+        context.fillStyle = grad;
+        context.fill();
+
+        context.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        context.lineWidth = 1;
+        context.stroke();
+        context.restore();
+    });
+}
+
+function drawMarblesZones(zones) {
+    if (!Array.isArray(zones)) return;
+
+    const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
+    
+    // --- CONFIGURACIÓN DE ALTURAS ---
+    const wallStartY = Math.round(canvasHeight * 0.90); // Altura donde EMPIEZAN las paredes verticales (82%)
+    const zoneHeight = 45;                               // Alto compacto del contenedor de puntos (45px)
+    const zoneStartY = canvasHeight - zoneHeight;        // El contenedor queda strictly pegado abajo
+    const wallThickness = 6;                             // Grosor de las paredes divisorias
+    // --------------------------------
+
+    zones.forEach((zone, idx) => {
+        const startX = Math.round(zone.startX * canvasWidth);
+        const endX = Math.round(zone.endX * canvasWidth);
+        const width = endX - startX;
+        const color = colors[idx % colors.length];
+
+        context.save();
+        
+        // 1. Dibujar el contenedor compacto abajo
+        context.fillStyle = color;
+        context.globalAlpha = 0.85;
+        context.fillRect(startX, zoneStartY, width, zoneHeight);
+
+        // Borde del contenedor
+        context.strokeStyle = '#ffffff';
+        context.lineWidth = 2;
+        context.strokeRect(startX, zoneStartY, width, zoneHeight);
+
+        // 2. Texto del multiplicador (+50, +200, etc.)
+        context.globalAlpha = 1.0;
+        context.fillStyle = '#ffffff';
+        context.font = 'bold 16px Arial';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+
+        applyTextShadow(true);
+        context.fillText(`+${zone.score}`, startX + width / 2, zoneStartY + zoneHeight / 2);
+
+        // 3. Dibujar ÚNICAMENTE la pared vertical que sube
+        if (idx < zones.length - 1) {
+            context.fillStyle = color;
+            context.globalAlpha = 1.0;
+            
+            // La pared se dibuja desde wallStartY (82%) hasta tocar la zona de abajo
+            const wallHeight = zoneStartY - wallStartY;
+
+            context.fillRect(
+                endX - wallThickness / 2,
+                wallStartY,
+                wallThickness,
+                wallHeight
+            );
+
+            // Borde sutil a la pared vertical para darle relieve
+            context.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            context.lineWidth = 1;
+            context.strokeRect(
+                endX - wallThickness / 2,
+                wallStartY,
+                wallThickness,
+                wallHeight
+            );
+        }
+
+        context.restore();
+    });
+}
+
+function drawPlayerName(player, x, y, radius) {
+    if (settings.showNames === false) return;
+
+    context.save();
+    context.font = getNameFont();
+    context.textAlign = 'center';
+    context.textBaseline = 'top';
+    context.fillStyle = settings.nameTextColor || '#ffffff';
+
+    applyTextShadow(settings.nameTextShadow !== false);
+
+    const displayName = getDisplayName(player);
+    const points = Math.floor(Number(player.points || 0));
+    const text = settings.showPoints === false ? displayName : `${displayName} · ${points}`;
+
+    const safeText = truncateText(text, 280);
+    const textWidth = context.measureText(safeText).width;
+    const fontSize = Number(settings.nameFontSize) || 14;
+
+    const boxWidth = Math.max(110, Math.min(300, textWidth + 18));
+    const boxHeight = Math.max(24, fontSize + 11);
+    const boxY = Math.round(y + radius + 8);
+
+    drawRoundedRect(
+        Math.round(x - boxWidth / 2),
+        boxY,
+        Math.round(boxWidth),
+        Math.round(boxHeight),
+        6,
+        'rgba(0, 0, 0, 0.72)'
+    );
+
+    const nameColor = player?.customColor;
+    if (nameColor && typeof nameColor === 'object') {
+        context.fillStyle = getPlayerGradient(
+            player,
+            x - boxWidth / 2,
+            boxY,
+            boxWidth,
+            boxHeight
+        );
+    } else {
+        context.fillStyle = settings.nameTextColor || '#ffffff';
+    }
+
+    context.fillText(safeText, Math.round(x), boxY + 5);
+    context.restore();
+}
+
+function drawPlayerMessage(ball, x, y, radius) {
+    if (
+        settings.showChat === false ||
+        !ball.message ||
+        ball.messageUntil <= Date.now()
+    ) {
+        return;
+    }
+
+    context.save();
+    context.font = getChatFont();
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = settings.chatTextColor || '#ffffff';
+
+    applyTextShadow(settings.chatTextShadow !== false);
+
+    const lines = wrapText(ball.message, Math.min(340, canvasWidth - 30));
+    const fontSize = Number(settings.chatFontSize) || 16;
+    const lineHeight = Math.max(17, fontSize + 4);
+    const horizontalPadding = 12;
+    const verticalPadding = 8;
+
+    const longestLineWidth = Math.max(
+        ...lines.map((line) => context.measureText(line).width)
+    );
+
+    const boxWidth = Math.min(canvasWidth - 20, longestLineWidth + horizontalPadding * 2);
+    const boxHeight = lines.length * lineHeight + verticalPadding * 2;
+
+    const centerY = Math.max(boxHeight / 2 + 4, y - radius - 14 - boxHeight / 2);
+    const boxX = x - boxWidth / 2;
+    const boxY = centerY - boxHeight / 2;
+
+    drawRoundedRect(
+        Math.round(boxX),
+        Math.round(boxY),
+        Math.round(boxWidth),
+        Math.round(boxHeight),
+        7,
+        'rgba(0, 0, 0, 0.84)'
+    );
+
+    context.fillStyle = settings.chatTextColor || '#ffffff';
+
+    lines.forEach((line, index) => {
+        const lineY = boxY + verticalPadding + lineHeight / 2 + index * lineHeight;
+        context.fillText(line, Math.round(x), Math.round(lineY));
+    });
+
+    context.restore();
+}
+
+function createDefeatParticles(ball, x, y, radius) {
+    if (ball.defeatParticlesCreated) return;
+    ball.defeatParticlesCreated = true;
+
+    const color = ball.player.color || '#5ee7ff';
+
+    for (let index = 0; index < 14; index += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 70 + Math.random() * 130;
+
+        defeatParticles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            radius: 2 + Math.random() * 4,
+            color,
+            startedAt: performance.now(),
+            duration: 450 + Math.random() * 200
+        });
+    }
+}
+
+function drawDefeatParticles() {
+    const now = performance.now();
+
+    for (let index = defeatParticles.length - 1; index >= 0; index -= 1) {
+        const particle = defeatParticles[index];
+        const progress = Math.min(1, (now - particle.startedAt) / particle.duration);
+
+        if (progress >= 1) {
+            defeatParticles.splice(index, 1);
+            continue;
+        }
+
+        const seconds = 1 / 60;
+        particle.x += particle.vx * seconds;
+        particle.y += particle.vy * seconds;
+        particle.vy += 120 * seconds;
+
+        context.save();
+        context.globalAlpha = 1 - progress;
+        drawCircle(particle.x, particle.y, particle.radius * (1 - progress), particle.color);
+        context.restore();
+    }
+}
+
+function drawDefeatedPlayer(ball) {
+    const player = ball.player;
+    const x = Math.round(ball.displayX * canvasWidth);
+    const y = Math.round(ball.displayY * canvasHeight);
+    const originalRadius = Math.max(24, Number(ball.defeatRadius) || 24);
+
+    const elapsed = performance.now() - ball.defeatStartedAt;
+    const progress = Math.min(1, elapsed / DEFEAT_DURATION);
+
+    if (progress >= 1) {
+        ball.alive = false;
+        return;
+    }
+
+    if (!ball.defeatParticlesCreated) {
+        createDefeatParticles(ball, x, y, originalRadius);
+    }
+
+    const popProgress = Math.min(1, progress / 0.18);
+    const shrinkProgress = Math.max(0, (progress - 0.18) / 0.82);
+    const popScale = 1 + Math.sin(popProgress * Math.PI) * 0.18;
+    const scale = popScale * (1 - shrinkProgress);
+    const radius = Math.max(1, originalRadius * scale);
+
+    context.save();
+    context.globalAlpha = 1 - progress;
+    drawGlow(x, y, radius, player.color || '#5ee7ff', true);
+    drawCircle(x, y, radius, player.color || '#5ee7ff');
+
+    context.font = '900 24px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = '#ff3b3b';
+    context.fillText('💥', x, y);
+
+    context.restore();
+}
+
+function drawPlayer(ball) {
+    const player = ball.player;
+    const x = Math.round(ball.displayX * canvasWidth);
+    const y = Math.round(ball.displayY * canvasHeight);
+    const radius = Math.round(Number(player.radius) || 24);
+
+    const ballColorConfig = player.ballColorConfig;
+    let color = player.color || '#5ee7ff';
+
+    if (ballColorConfig && ballColorConfig.type === 'rainbow') {
+        color = `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
+    }
+
+    const image = getAvatar(player.avatar || '');
+    const activeEffect = ball.effectUntil > Date.now();
+
+    drawGlow(x, y, radius, color, activeEffect);
+    drawCircle(x, y, radius, color);
+    drawAvatar(image, x, y, radius);
+    drawPlayerName(player, x, y, radius);
+    drawPlayerMessage(ball, x, y, radius);
+}
+
+function interpolateBalls(deltaTime) {
+    const factor = Math.min(1, deltaTime * 10);
+
+    for (const ball of balls.values()) {
+        ball.displayX += (ball.targetX - ball.displayX) * factor;
+        ball.displayY += (ball.targetY - ball.displayY) * factor;
+    }
+}
+
+function drawFrame() {
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
+
+// DIBUJAR MAPA Y OBSTÁCULOS SI ESTAMOS EN MODO CANICAS (MARBLES)
+    if (settings.gameMode === 'marbles' && gameState) {
+        if (gameState.pegs) drawMarblesPegs(gameState.pegs);
+        if (gameState.zones) drawMarblesZones(gameState.zones);
+        drawMarblesUI();
+    }
+
+    const drawableBalls = [...balls.values()]
+        .filter((ball) => ball.alive)
+        .sort((first, second) => {
+            const firstRadius = Number(first.player.radius) || 24;
+            const secondRadius = Number(second.player.radius) || 24;
+            return secondRadius - firstRadius;
+        });
+
+    for (const ball of drawableBalls) {
+        if (settings.gameMode === 'battle' && ball.player.status === 'defeated') {
+            drawDefeatedPlayer(ball);
+            continue;
+        }
+
+        drawPlayer(ball);
+    }
+
+    drawDefeatParticles();
+
+    for (const [id, ball] of balls.entries()) {
+        if (!ball.alive) balls.delete(id);
+    }
+}
+
+function drawMarblesUI() {
+    if (settings.gameMode !== 'marbles' || !marblesRoundData) return;
+
+    context.save();
+    context.font = 'bold 22px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'top';
+
+    const centerX = canvasWidth / 2;
+
+    if (marblesRoundData.state === 'LOBBY') {
+        context.fillStyle = '#ffe66d';
+        applyTextShadow(true);
+        context.fillText('⏳ ESPERANDO JUGADORES...', centerX, 20);
+    } else if (marblesRoundData.state === 'COUNTDOWN') {
+        context.fillStyle = '#ff595e';
+        context.font = 'bold 48px Arial';
+        applyTextShadow(true);
+        context.fillText(`¡${marblesRoundData.countdownTime}!`, centerX, 15);
+    } else if (marblesRoundData.state === 'PLAYING') {
+        const minutes = Math.floor(marblesRoundData.timeRemaining / 60);
+        const seconds = String(marblesRoundData.timeRemaining % 60).padStart(2, '0');
+        
+        context.fillStyle = '#ffffff';
+        context.font = 'bold 20px Arial';
+        applyTextShadow(true);
+        context.fillText(`⏱️ TIEMPO: ${minutes}:${seconds}`, centerX, 20);
+    } else if (marblesRoundData.state === 'ROUND_OVER') {
+        context.fillStyle = '#8ac926';
+        context.font = 'bold 28px Arial';
+        applyTextShadow(true);
+        context.fillText('🏁 ¡FIN DE LA CARRERA!', centerX, 20);
+    }
+
+    context.restore();
+}
+
+function showWinner(winner) {
+    if (!winner) return;
+
+    winnerName.textContent = getDisplayName(winner);
+    winnerWins.textContent = `${winner.wins || 1} victoria(s)`;
+
+    // Si estamos en modo marbles, posicionar el cartel dentro del canal visual
+    if (settings && settings.gameMode === 'marbles') {
+        winnerBanner.classList.add('marbles-mode');
+    } else {
+        winnerBanner.classList.remove('marbles-mode');
+    }
+
+    winnerBanner.classList.remove('hidden');
+}
+
+function resetLocalRound() {
+    balls.clear();
+    defeatParticles.length = 0;
+
+    winnerBanner.classList.add('hidden');
+    winnerName.textContent = '';
+    winnerWins.textContent = '';
+}
+
+function animationLoop(currentTime) {
+    const deltaTime = Math.min((currentTime - lastFrameTime) / 1000, 0.05);
+    lastFrameTime = currentTime;
+
+    interpolateBalls(deltaTime);
+    drawFrame();
+
+    requestAnimationFrame(animationLoop);
+}
+
+socket.on('arena:resize', (size) => {
+    pendingCanvasResize = {
+        width: size.width,
+        height: size.height
+    };
+
+    resizeCanvas(pendingCanvasResize.width, pendingCanvasResize.height);
+    pendingCanvasResize = null;
+});
+
+socket.on('state:init', renderState);
+socket.on('state:update', renderState);
+socket.on('marbles:round-tick', (data) => {
+    if (data) {
+        marblesRoundData = data;
+    }
+});
+socket.on('state', renderState);
+
+socket.on('game:event', (event) => {
+    if (event?.type === 'avatar-update') {
+        updateAvatar(event);
+        return;
+    }
+    updateEventMessage(event);
+});
+
+socket.on('game:eaten', (result) => {
+    if (result?.state) renderState(result.state);
+
+    const eaterId = result?.eater?.id;
+    if (!eaterId) return;
+
+    const ball = balls.get(String(eaterId));
+    if (ball) ball.effectUntil = Date.now() + 700;
+});
+
+socket.on('game:battle-hit', (result) => {
+    const defeatedPlayers = result?.defeated || [];
+
+    for (const defeatedPlayer of defeatedPlayers) {
+        startBattleDefeat(defeatedPlayer);
+    }
+
+    if (result?.state) renderState(result.state);
+});
+
+socket.on('game:battle-draw', (result) => {
+    if (result?.state) renderState(result.state);
+});
+
+socket.on('game:win', (payload) => {
+    if (payload?.winner) showWinner(payload.winner);
+    if (payload?.state) renderState(payload.state);
+});
+
+socket.on('game:round-reset', resetLocalRound);
+socket.on('game:reset', resetLocalRound);
+
+socket.on('connect', () => {
+    console.log('[Overlay] Socket conectado');
+});
+
+socket.on('disconnect', () => {
+    console.log('[Overlay] Socket desconectado');
+});
+
+resizeCanvas();
+
+window.addEventListener('resize', () => {
+    resizeCanvas(canvasWidth, canvasHeight);
+});
+
+requestAnimationFrame(animationLoop);

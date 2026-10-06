@@ -1,0 +1,22 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Evita barras de desplazamiento */
+    background: transparent;
+}
+
+#podium {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#podium-canvas, #overlay-canvas {
+    will-change: transform;
+    transform: translateZ(0); /* Fuerza al navegador a mantener la capa alojada en la VRAM de la GPU */
+}
