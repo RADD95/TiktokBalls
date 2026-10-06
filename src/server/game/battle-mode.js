@@ -220,8 +220,8 @@ function getNormal(
         distance < 0.0001
     ) {
         return {
-            x: 1,
-            y: 0,
+            x: 0,
+            y: second.y < first.y ? -1 : 1,
             distance: 0
         };
     }
@@ -463,152 +463,75 @@ function separatePlayers(
             settings
         );
 
-
     const firstRadius =
-        getRadius(
-            first
-        );
-
+        getRadius(first);
 
     const secondRadius =
-        getRadius(
-            second
-        );
+        getRadius(second);
 
-
-    const contained =
-        isContained(
-            first,
-            second,
-            normal.distance
-        );
-
-
-    const arenaDominating =
-        dominatesArena(
-            first,
-            settings
-        ) ||
-        dominatesArena(
-            second,
-            settings
-        );
-
-
-    /*
-     * Contención o arena dominada:
-     * no se aplica corrección de posición.
-     * La respuesta será presión controlada sobre
-     * la bolita con menor radio.
-     */
-    if (
-        contained ||
-        arenaDominating
-    ) {
-        return {
-            normalX:
-                normal.x,
-
-            normalY:
-                normal.y,
-
-            contained,
-            arenaDominating
-        };
-    }
-
+    const totalRadius =
+        firstRadius + secondRadius;
 
     const overlap =
-        firstRadius +
-        secondRadius -
-        normal.distance;
+        totalRadius - normal.distance;
 
-
-    if (
-        overlap <= 0
-    ) {
+    if (overlap <= 0) {
         return {
-            normalX:
-                normal.x,
-
-            normalY:
-                normal.y,
-
-            contained:
-                false,
-
-            arenaDominating:
-                false
+            normalX: normal.x,
+            normalY: normal.y,
+            trapped: false
         };
     }
 
-
     const arena =
-        getArenaSize(
-            settings
-        );
+        getArenaSize(settings);
 
+    // Reparto de desplazamiento proporcional a la masa (radio)
+    const mass1 = Math.max(1, firstRadius);
+    const mass2 = Math.max(1, secondRadius);
+    const totalMass = mass1 + mass2;
 
-    const correction =
-        overlap / 2 + 1;
+    const ratio1 = mass2 / totalMass;
+    const ratio2 = mass1 / totalMass;
 
+    // Verificar si alguna bola está bloqueada en algún eje por superar la mitad de la arena
+    const normX1 = firstRadius / arena.width;
+    const normY1 = firstRadius / arena.height;
+    const canMoveX1 = normX1 < 0.5;
+    const canMoveY1 = normY1 < 0.5;
 
-    first.x -=
-        (
-            normal.x *
-            correction
-        ) /
-        arena.width;
+    const normX2 = secondRadius / arena.width;
+    const normY2 = secondRadius / arena.height;
+    const canMoveX2 = normX2 < 0.5;
+    const canMoveY2 = normY2 < 0.5;
 
+    const factorX1 = canMoveX1 ? (canMoveX2 ? ratio1 : 1) : 0;
+    const factorY1 = canMoveY1 ? (canMoveY2 ? ratio1 : 1) : 0;
 
-    first.y -=
-        (
-            normal.y *
-            correction
-        ) /
-        arena.height;
+    const factorX2 = canMoveX2 ? (canMoveX1 ? ratio2 : 1) : 0;
+    const factorY2 = canMoveY2 ? (canMoveY1 ? ratio2 : 1) : 0;
 
+    const correction = overlap + 0.5;
 
-    second.x +=
-        (
-            normal.x *
-            correction
-        ) /
-        arena.width;
+    first.x -= (normal.x * correction * factorX1) / arena.width;
+    first.y -= (normal.y * correction * factorY1) / arena.height;
 
+    second.x += (normal.x * correction * factorX2) / arena.width;
+    second.y += (normal.y * correction * factorY2) / arena.height;
 
-    second.y +=
-        (
-            normal.y *
-            correction
-        ) /
-        arena.height;
+    // Asegurar SIEMPRE que ninguna bola sea empujada fuera de los límites de la arena
+    keepPlayerInsideArena(first, settings);
+    keepPlayerInsideArena(second, settings);
 
-
-    keepPlayerInsideArena(
-        first,
-        settings
-    );
-
-
-    keepPlayerInsideArena(
-        second,
-        settings
-    );
-
+    // Comprobar si la bola menor quedó atrapada contra los límites sin más arena para moverse
+    const newDistance = getDistance(first, second, settings);
+    const maxRadius = Math.max(firstRadius, secondRadius);
+    const trapped = newDistance < maxRadius;
 
     return {
-        normalX:
-            normal.x,
-
-        normalY:
-            normal.y,
-
-        contained:
-            false,
-
-        arenaDominating:
-            false
+        normalX: normal.x,
+        normalY: normal.y,
+        trapped
     };
 }
 
@@ -626,23 +549,17 @@ function bounce(
             settings
         );
 
-
-    if (
-        collision.contained ||
-        collision.arenaDominating
-    ) {
+    // Solo si no hay más arena libre para moverse (atrapada contra la pared)
+    if (collision.trapped) {
         const target =
-            getRadius(first) <=
-                getRadius(second)
+            getRadius(first) <= getRadius(second)
                 ? first
                 : second;
-
 
         const attacker =
             target.id === first.id
                 ? second
                 : first;
-
 
         applyPressureImpulse(
             target,
@@ -651,63 +568,36 @@ function bounce(
             now
         );
 
-
         return;
     }
-
 
     const relativeVelocity =
-        (
-            second.vx -
-            first.vx
-        ) *
-        collision.normalX +
-        (
-            second.vy -
-            first.vy
-        ) *
-        collision.normalY;
+        (second.vx - first.vx) * collision.normalX +
+        (second.vy - first.vy) * collision.normalY;
 
-
-    if (
-        relativeVelocity >= 0
-    ) {
+    if (relativeVelocity >= 0) {
         return;
     }
 
+    const firstRadius = getRadius(first);
+    const secondRadius = getRadius(second);
+    const mass1 = Math.max(1, firstRadius);
+    const mass2 = Math.max(1, secondRadius);
 
+    const restitution = 1.05;
     const impulse =
-        relativeVelocity;
+        -(1 + restitution) *
+        relativeVelocity /
+        ((1 / mass1) + (1 / mass2));
 
+    first.vx -= (impulse / mass1) * collision.normalX;
+    first.vy -= (impulse / mass1) * collision.normalY;
 
-    first.vx +=
-        impulse *
-        collision.normalX;
+    second.vx += (impulse / mass2) * collision.normalX;
+    second.vy += (impulse / mass2) * collision.normalY;
 
-
-    first.vy +=
-        impulse *
-        collision.normalY;
-
-
-    second.vx -=
-        impulse *
-        collision.normalX;
-
-
-    second.vy -=
-        impulse *
-        collision.normalY;
-
-
-    limitVelocity(
-        first
-    );
-
-
-    limitVelocity(
-        second
-    );
+    limitVelocity(first);
+    limitVelocity(second);
 }
 
 

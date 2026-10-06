@@ -816,10 +816,20 @@ function drawPlayerName(player, x, y, radius) {
     applyTextShadow(settings.nameTextShadow !== false);
 
     const displayName = getDisplayName(player);
-    const points = Math.floor(Number(player.points || 0));
-    const text = settings.showPoints === false ? displayName : `${displayName} · ${points}`;
+    const maxTotalWidth = 280;
+    let safeText;
 
-    const safeText = truncateText(text, 280);
+    if (settings.showPoints === false) {
+        safeText = truncateText(displayName, maxTotalWidth);
+    } else {
+        const points = Math.floor(Number(player.points || 0));
+        const pointsSuffix = ` · ${points}`;
+        const pointsWidth = context.measureText(pointsSuffix).width;
+        const maxNameWidth = Math.max(20, maxTotalWidth - pointsWidth);
+        const safeName = truncateText(displayName, maxNameWidth);
+        safeText = `${safeName}${pointsSuffix}`;
+    }
+
     const textWidth = context.measureText(safeText).width;
     const fontSize = Number(settings.nameFontSize) || 14;
 
